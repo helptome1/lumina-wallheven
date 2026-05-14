@@ -17,58 +17,43 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="wallpaper-grid-container h-full overflow-y-auto custom-scroll">
-    <!-- Wallpapers -->
+  <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
+    <!-- Wallpapers Grid -->
     <div
       v-if="wallpapers.length > 0"
-      class="px-5 pb-8 pt-2"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
     >
-      <div class="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4">
-        <WallpaperCard
-          v-for="(wallpaper, index) in wallpapers"
-          :key="wallpaper.id"
-          :data="wallpaper"
-          :style="{ '--index': index % 30 }"
-          @download="emit('download', wallpaper)"
-        />
-      </div>
+      <WallpaperCard
+        v-for="wallpaper in wallpapers"
+        :key="wallpaper.id"
+        :data="wallpaper"
+        @download="emit('download', wallpaper)"
+      />
     </div>
 
     <!-- Initial loading -->
     <SkeletonGrid v-if="loading && wallpapers.length === 0" />
 
-    <!-- Load more spinner -->
+    <!-- Load more indicator -->
     <div
       v-if="loading && wallpapers.length > 0"
-      class="flex justify-center py-10"
+      class="flex justify-center py-12"
     >
-      <div class="flex items-center gap-3">
-        <div class="w-5 h-5 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
-        <span class="text-white/15 text-sm">加载更多…</span>
+      <div class="flex gap-2">
+        <span
+          v-for="i in 3"
+          :key="i"
+          class="w-2 h-2 rounded-full bg-primary/40 animate-bounce"
+          :style="{ animationDelay: `${i * 0.15}s` }"
+        />
       </div>
     </div>
 
     <!-- Empty state -->
     <EmptyState
       v-if="!loading && wallpapers.length === 0"
-      title="暂无壁纸"
-      description="尝试调整搜索条件或筛选器"
+      title="No wallpapers found"
+      description="Try adjusting your search filters"
     />
   </div>
 </template>
-
-<style scoped>
-.custom-scroll::-webkit-scrollbar {
-  width: 5px;
-}
-.custom-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(167, 139, 250, 0.08);
-  border-radius: 3px;
-}
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(167, 139, 250, 0.18);
-}
-</style>

@@ -8,12 +8,17 @@ const collection = useCollectionStore()
 
 <template>
   <div class="flex flex-col h-full">
-    <div class="px-6 py-4 flex items-center justify-between">
-      <div>
-        <h2 class="display-italic text-accent text-2xl">我的收藏</h2>
-        <p class="text-xs text-subtle mt-1">{{ collection.items.length }} 张壁纸</p>
+    <!-- Page Header -->
+    <div class="h-20 flex items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">favorite</span>
+        <div>
+          <h2 class="text-headline-lg text-on-surface">My Favorites</h2>
+          <p class="text-body-sm text-on-surface-variant">{{ collection.items.length }} wallpapers</p>
+        </div>
       </div>
     </div>
+
     <div class="flex-1 overflow-hidden">
       <template v-if="collection.items.length > 0">
         <WallpaperGrid
@@ -22,11 +27,12 @@ const collection = useCollectionStore()
           :has-more="false"
         />
       </template>
-      <EmptyState
-        v-else
-        title="还没有收藏"
-        description="点击壁纸上的心形图标即可收藏"
-      />
+      <div v-else class="flex-1 flex items-center justify-center">
+        <EmptyState
+          title="No favorites yet"
+          description="Click the heart icon on any wallpaper to save it here"
+        />
+      </div>
     </div>
   </div>
 </template>

@@ -1,78 +1,111 @@
 @import "tailwindcss";
 
 /* ============================================
-   Aurora Gallery — Design System
-   Style: Aurora UI + Glassmorphism + Dark Mode
+   Lumina — Light Glassmorphism Design System
+   1:1 matched from layout.html + imageDetail.html
    ============================================ */
 
-:root {
-  /* Deep aurora backgrounds */
-  --bg-base: #07071A;
-  --bg-surface: #0C0C24;
-  --bg-elevated: #111133;
-  --bg-muted: #161642;
-  --bg-overlay: rgba(7, 7, 26, 0.94);
+@theme {
+  /* ── Color System (from layout.html tailwind.config) ── */
+  --color-surface-bright: #f8fafb;
+  --color-outline-variant: #c7c4d7;
+  --color-on-primary-fixed: #07006c;
+  --color-primary: #4648d4;
+  --color-on-primary: #ffffff;
+  --color-on-surface: rgb(32, 33, 36);
+  --color-secondary: #575992;
+  --color-on-tertiary-fixed-variant: #703700;
+  --color-on-background: rgb(32, 33, 36);
+  --color-primary-container: #6063ee;
+  --color-on-primary-container: #fffbff;
+  --color-on-error-container: #93000a;
+  --color-outline: #767586;
+  --color-surface-container-low: #f2f4f5;
+  --color-tertiary-container: #b55d00;
+  --color-inverse-on-surface: #eff1f2;
+  --color-error-container: #ffdad6;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-secondary-container: #494b83;
+  --color-surface-container: #eceeef;
+  --color-primary-fixed-dim: #c0c1ff;
+  --color-on-surface-variant: #464554;
+  --color-error: #ba1a1a;
+  --color-primary-fixed: #e1e0ff;
+  --color-on-tertiary-container: #fffbff;
+  --color-on-primary-fixed-variant: #2f2ebe;
+  --color-surface: #f8fafb;
+  --color-secondary-fixed: #e1e0ff;
+  --color-on-tertiary: #ffffff;
+  --color-secondary-container: #bdbefe;
+  --color-on-tertiary-fixed: #301400;
+  --color-tertiary-fixed: #ffdcc5;
+  --color-on-error: #ffffff;
+  --color-surface-container-high: #e6e8e9;
+  --color-on-secondary: #ffffff;
+  --color-surface-dim: #d8dadb;
+  --color-inverse-surface: #2e3132;
+  --color-tertiary-fixed-dim: #ffb783;
+  --color-secondary-fixed-dim: #c0c1ff;
+  --color-inverse-primary: #c0c1ff;
+  --color-tertiary: #904900;
+  --color-surface-tint: #494bd6;
+  --color-surface-variant: #e1e3e4;
+  --color-on-secondary-fixed: #13144a;
+  --color-on-secondary-fixed-variant: #404178;
+  --color-background: rgb(241, 243, 244);
+  --color-border-glass: rgba(0, 0, 0, 0.08);
 
-  /* Aurora accent — violet → teal gradient family */
-  --accent: #A78BFA;
-  --accent-soft: #8B5CF6;
-  --accent-muted: #6D4DD4;
-  --accent-glow: rgba(167, 139, 250, 0.12);
-  --accent-glow-strong: rgba(139, 92, 246, 0.22);
+  /* ── Spacing ── */
+  --spacing-base: 8px;
+  --spacing-container-margin-desktop: 40px;
+  --spacing-gutter: 24px;
+  --spacing-card-gap: 16px;
+  --spacing-container-margin-mobile: 20px;
+  --spacing-sidebar-width: 280px;
 
-  /* Second accent — teal/cyan */
-  --accent-2: #2DD4BF;
-  --accent-2-soft: #14B8A6;
-  --accent-2-glow: rgba(45, 212, 191, 0.12);
+  /* ── Font Families ── */
+  --font-headline-xl: 'Manrope', sans-serif;
+  --font-headline-lg: 'Manrope', sans-serif;
+  --font-headline-md: 'Manrope', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-body-sm: 'Inter', sans-serif;
+  --font-label-caps: 'JetBrains Mono', monospace;
 
-  /* Warm accent */
-  --warm: #F59E0B;
-  --warm-glow: rgba(245, 158, 11, 0.15);
+  /* ── Font Sizes ── */
+  --text-headline-xl: 48px;
+  --text-headline-xl--line-height: 56px;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl--font-weight: 800;
 
-  /* Text hierarchy */
-  --text-primary: #EDE9FE;
-  --text-secondary: #A5A0C0;
-  --text-tertiary: #5C5880;
-  --text-inverse: #07071A;
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 700;
 
-  /* Semantic */
-  --favorite: #FB7185;
-  --favorite-glow: rgba(251, 113, 133, 0.2);
-  --success: #34D399;
-  --warning: #FBBF24;
-  --error: #F87171;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 600;
 
-  /* Borders */
-  --border-subtle: rgba(167, 139, 250, 0.06);
-  --border-default: rgba(167, 139, 250, 0.10);
-  --border-strong: rgba(167, 139, 250, 0.18);
-  --border-accent: rgba(167, 139, 250, 0.30);
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--font-weight: 400;
 
-  /* Typography */
-  --font-display: 'Playfair Display', 'Georgia', serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
 
-  /* Spacing scale */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 20px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight: 500;
 
-  /* Radii */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-
-  /* Shadows */
-  --shadow-card: 0 1px 0 var(--border-subtle), 0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 2px 0 var(--border-subtle), 0 12px 40px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 60px var(--accent-glow);
-  --shadow-glow-teal: 0 0 60px var(--accent-2-glow);
+  /* ── Border Radius ── */
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
 }
 
 /* ============================================
@@ -93,58 +126,89 @@ html, body, #app {
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-primary);
-  background: var(--bg-base);
+  background-color: rgb(241, 243, 244);
+  color: rgb(32, 33, 36);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  user-select: none;
-  -webkit-user-select: none;
+}
+
+h1, h2, h3, .font-headline {
+  font-family: 'Manrope', sans-serif;
+  color: rgb(32, 33, 36);
 }
 
 /* ============================================
-   Typography
+   Material Symbols Base
    ============================================ */
 
-.display {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
 }
 
-.display-italic {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 500;
+/* ============================================
+   Glass Effects
+   ============================================ */
+
+.glass-edge {
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.mono {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+.wallpaper-card-overlay {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, transparent 60%);
+  backdrop-filter: blur(40px);
 }
 
 /* ============================================
    Scrollbar
    ============================================ */
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(167, 139, 250, 0.12);
-  border-radius: 2px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(167, 139, 250, 0.25);
+
+/* ── Modal ── */
+.modal-overlay {
+  backdrop-filter: blur(20px);
+  background: rgba(248, 250, 251, 0.85);
 }
-::-webkit-scrollbar-corner {
-  background: transparent;
+
+.light-glass-modal {
+  backdrop-filter: blur(40px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.text-modal-primary {
+  color: rgb(32, 33, 36);
+}
+
+.text-modal-secondary {
+  color: rgba(32, 33, 36, 0.7);
+}
+
+.soft-glow {
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.6),
+    0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.specular-edge {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ============================================
@@ -166,167 +230,26 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes aurora-drift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 30px var(--accent-glow); }
-  50% { box-shadow: 0 0 60px var(--accent-glow-strong); }
-}
-
-/* ============================================
-   Glass Surfaces
-   ============================================ */
-
-.glass {
-  background: rgba(17, 17, 51, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-}
-
-.glass-elevated {
-  background: rgba(22, 22, 66, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-}
-
-.glass-card {
-  background: rgba(12, 12, 36, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  transition: all 0.3s ease;
-}
-.glass-card:hover {
-  background: rgba(17, 17, 51, 0.7);
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-glow);
-}
-
-/* ============================================
-   Text utilities
-   ============================================ */
-
-.text-muted {
-  color: var(--text-secondary);
-}
-.text-subtle {
-  color: var(--text-tertiary);
-}
-.text-accent {
-  color: var(--accent);
-}
-.text-accent-2 {
-  color: var(--accent-2);
-}
-
-/* Divider */
-.divider {
-  width: 100%;
-  height: 1px;
-  background: var(--border-subtle);
-}
-
-/* Focus ring */
-.focus-ring:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ============================================
-   Button Presets
-   ============================================ */
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-ghost:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-}
-
-.btn-accent {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 7px 18px;
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius-md);
-  background: var(--accent-glow);
-  color: var(--accent);
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-.btn-accent:hover {
-  background: var(--accent-glow-strong);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-glow);
-}
-
-/* ============================================
-   Aurora Background Effect
-   ============================================ */
-
-.aurora-bg {
-  position: relative;
-}
-.aurora-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 70% at 80% 80%, rgba(45, 212, 191, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* ============================================
    Page Transitions
    ============================================ */
 
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+.page-enter-active {
+  transition: opacity 0.3s ease-out,
+              transform 0.3s ease-out;
 }
 .page-enter-from {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(8px);
+}
+
+.page-leave-active {
+  transition: opacity 0.2s ease-out,
+              transform 0.2s ease-out;
 }
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(-8px);
 }
 
 /* ============================================

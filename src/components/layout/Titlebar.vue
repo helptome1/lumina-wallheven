@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { Minus, Square, X, Maximize2 } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 
 const appWindow = getCurrentWindow()
 const isMaximized = ref(false)
 
 onMounted(async () => {
-  isMaximized.value = await appWindow.isMaximized()
+  try {
+    isMaximized.value = await appWindow.isMaximized()
+  } catch {
+    // Not running in Tauri
+  }
 })
 
 async function minimize() { await appWindow.minimize() }
@@ -21,80 +24,26 @@ async function close() { await appWindow.close() }
 <template>
   <header
     data-tauri-drag-region
-    class="titlebar"
+    class="fixed top-0 left-0 right-0 z-[200] h-9 flex items-center justify-between px-4 bg-white/60 backdrop-blur-xl border-b border-black/5"
   >
-    <!-- App name -->
-    <div class="titlebar-brand">
-      <span class="display-italic text-accent text-[14px] tracking-wide">Gallery</span>
-      <div class="w-1 h-1 rounded-full bg-accent/60 ml-2 mt-px" />
+    <!-- Brand -->
+    <div class="flex items-center gap-2 pl-2">
+      <div class="w-2 h-2 rounded-full bg-primary shadow-sm shadow-primary/30" />
+      <span class="text-[11px] font-semibold text-primary font-headline-lg tracking-tight">Lumina</span>
     </div>
 
-    <!-- Window controls -->
-    <div class="titlebar-controls">
-      <button @click="minimize" class="ctrl-btn" aria-label="Minimize">
-        <Minus :size="14" />
+    <!-- Window Controls -->
+    <div class="flex items-center gap-1.5 -mr-1" style="-webkit-app-region: no-drag">
+      <button @click="minimize" class="w-7 h-6 rounded-md flex items-center justify-center text-on-surface-variant/50 hover:bg-black/5 hover:text-on-surface-variant transition-all">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="1.5" rx="0.75" fill="currentColor" /></svg>
       </button>
-      <button @click="toggleMaximize" class="ctrl-btn" aria-label="Maximize">
-        <Maximize2 v-if="!isMaximized" :size="12" />
-        <Square v-else :size="12" />
+      <button @click="toggleMaximize" class="w-7 h-6 rounded-md flex items-center justify-center text-on-surface-variant/50 hover:bg-black/5 hover:text-on-surface-variant transition-all">
+        <svg v-if="!isMaximized" width="11" height="11" viewBox="0 0 11 11"><rect x="0.5" y="0.5" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none" /></svg>
+        <svg v-else width="11" height="11" viewBox="0 0 11 11"><rect x="2" y="0" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none" /><rect x="0.5" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="white" /></svg>
       </button>
-      <button @click="close" class="ctrl-btn ctrl-close" aria-label="Close">
-        <X :size="14" />
+      <button @click="close" class="w-7 h-6 rounded-md flex items-center justify-center text-on-surface-variant/50 hover:bg-[#FF5F57]/10 hover:text-[#FF5F57] transition-all">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
       </button>
     </div>
   </header>
 </template>
-
-<style scoped>
-.titlebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  background: rgba(7, 7, 26, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.titlebar-brand {
-  display: flex;
-  align-items: center;
-  padding-left: 4px;
-}
-
-.titlebar-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  -webkit-app-region: no-drag;
-}
-
-.ctrl-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 26px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.ctrl-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  color: var(--text-secondary);
-}
-.ctrl-close:hover {
-  background: rgba(251, 113, 133, 0.2);
-  color: var(--favorite);
-}
-</style>

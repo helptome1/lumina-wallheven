@@ -1,167 +1,85 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { Flame, Ghost, Users, Heart, Download, Info } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 
 interface NavItem {
-  path?: string
+  path: string
   label: string
-  icon: any
-  type?: 'divider' | 'section'
+  icon: string
 }
 
 const navItems: NavItem[] = [
-  { type: 'section', label: '在线壁纸', icon: null },
-  { path: '/hot', label: '热门推荐', icon: Flame },
-  { path: '/anime', label: '动漫精选', icon: Ghost },
-  { path: '/people', label: '人物精选', icon: Users },
-  { type: 'divider', label: '', icon: null },
-  { type: 'section', label: '我的壁纸', icon: null },
-  { path: '/collection', label: '我的收藏', icon: Heart },
-  { path: '/downloads', label: '下载中心', icon: Download },
-  { type: 'divider', label: '', icon: null },
-  { type: 'section', label: '其他', icon: null },
-  { path: '/about', label: '关于', icon: Info },
+  { path: '/hot', label: 'Explore', icon: 'explore' },
+  { path: '/hot', label: 'Hot', icon: 'local_fire_department' },
+  { path: '/anime', label: 'Anime', icon: 'auto_awesome' },
+  { path: '/people', label: 'People', icon: 'groups' },
+  { path: '/collection', label: 'Favorites', icon: 'favorite' },
+  { path: '/downloads', label: 'Downloads', icon: 'download' },
 ]
 
 const activePath = computed(() => route.path)
+
+function isActive(path: string): boolean {
+  return activePath.value === path
+}
+
+function navigate(path: string) {
+  router.push(path)
+}
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside
+    class="w-sidebar-width h-screen sticky left-0 top-0 z-20 flex flex-col p-6 shadow-xl m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
+  >
     <!-- Brand -->
-    <div class="sidebar-brand">
-      <p class="display text-[24px] leading-none text-accent tracking-tight">Gallery</p>
-      <p class="text-[10px] text-subtle tracking-[0.2em] uppercase mt-1">Wallpaper</p>
+    <div class="mb-10 px-2">
+      <h1 class="text-headline-xl text-primary leading-tight">Lumina</h1>
+      <p class="text-body-sm text-on-surface-variant font-medium">4K Creative Gallery</p>
     </div>
 
-    <!-- Nav -->
-    <nav class="sidebar-nav">
-      <template v-for="(item, index) in navItems" :key="index">
-        <p v-if="item.type === 'section'" class="nav-section">{{ item.label }}</p>
-        <div v-else-if="item.type === 'divider'" class="divider my-1.5" />
-        <button
-          v-else
-          @click="router.push(item.path!)"
-          class="nav-item group"
-          :class="{ active: activePath === item.path }"
-        >
-          <component :is="item.icon" :size="17" class="nav-icon" />
-          <span class="nav-label">{{ item.label }}</span>
-          <span v-if="activePath === item.path" class="nav-indicator" />
-        </button>
-      </template>
+    <!-- Navigation -->
+    <nav class="flex-1 space-y-1">
+      <button
+        v-for="item in navItems"
+        :key="item.label"
+        @click="navigate(item.path)"
+        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300 w-full text-left"
+        :class="isActive(item.path)
+          ? 'bg-primary text-on-primary border border-primary/20 shadow-lg shadow-primary/20 font-bold'
+          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
+      >
+        <span class="material-symbols-outlined">{{ item.icon }}</span>
+        <span class="text-body-md">{{ item.label }}</span>
+      </button>
     </nav>
 
-    <!-- Footer -->
-    <div class="sidebar-footer">
-      <p class="text-[10px] text-subtle leading-relaxed">
-        Images from
-        <span class="text-accent/60">wallhaven.cc</span>
-      </p>
+    <!-- Bottom Section -->
+    <div class="mt-auto pt-6 border-t border-black/5">
+      <button
+        @click="navigate('/about')"
+        class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-black/5 rounded-xl px-4 py-3 transition-all mb-4 w-full text-left"
+        :class="{ 'bg-primary text-on-primary border border-primary/20 shadow-lg shadow-primary/20 font-bold': isActive('/about') }"
+      >
+        <span class="material-symbols-outlined">info</span>
+        <span class="text-body-md">About</span>
+      </button>
+
+      <!-- User Profile Card -->
+      <div class="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-2xl border border-black/5">
+        <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
+          <div class="w-full h-full bg-gradient-to-br from-primary to-primary-fixed-dim flex items-center justify-center">
+            <span class="text-on-primary text-sm font-bold">E</span>
+          </div>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="text-body-sm font-bold text-on-surface truncate">Erik V.</span>
+          <span class="text-label-caps text-[10px] text-primary/70 uppercase tracking-widest">Pro Member</span>
+        </div>
+      </div>
     </div>
   </aside>
 </template>
-
-<style scoped>
-.sidebar {
-  width: 210px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 14px;
-  background: rgba(12, 12, 36, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-right: 1px solid var(--border-subtle);
-}
-
-.sidebar-brand {
-  padding: 0 8px 24px;
-}
-
-.nav-section {
-  padding: 8px 10px 4px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.sidebar-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.nav-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  overflow: hidden;
-}
-
-.nav-item:hover {
-  color: var(--text-primary);
-  background: rgba(139, 92, 246, 0.08);
-}
-
-.nav-item.active {
-  color: var(--accent);
-  background: var(--accent-glow);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-
-.nav-indicator {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2px;
-  height: 18px;
-  border-radius: 1px;
-  background: linear-gradient(180deg, var(--accent-soft), var(--accent-2-soft));
-  animation: fade-in 0.3s ease;
-  box-shadow: 0 0 8px var(--accent-glow-strong);
-}
-
-.nav-icon {
-  flex-shrink: 0;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
-}
-.nav-item:hover .nav-icon {
-  opacity: 0.75;
-}
-.nav-item.active .nav-icon {
-  opacity: 1;
-}
-
-.nav-label {
-  font-weight: 400;
-}
-.nav-item.active .nav-label {
-  font-weight: 500;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding: 16px 8px 0;
-}
-</style>

@@ -4,7 +4,6 @@ import type { WallpaperData } from '@/types/wallhaven'
 import { wallhavenApi } from '@/api/wallhaven'
 import { useCollectionStore } from '@/stores/collection'
 import { useDownloadStore } from '@/stores/download'
-import { X, Heart, Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 const props = defineProps<{
   data: WallpaperData
@@ -23,13 +22,11 @@ const downloadStore = useDownloadStore()
 
 const fullImageUrl = ref('')
 const loading = ref(true)
-const zoom = ref(1)
-const rotation = ref(0)
+const zoomed = ref(false)
 
 async function loadImage(data: WallpaperData) {
   loading.value = true
-  zoom.value = 1
-  rotation.value = 0
+  zoomed.value = false
   fullImageUrl.value = wallhavenApi.getFullImageUrl(data.path)
 }
 
@@ -37,33 +34,14 @@ watch(() => props.data, (data) => {
   loadImage(data)
 }, { immediate: true })
 
-function onKeydown(e: KeyboardEvent) {
-  switch (e.key) {
-    case 'Escape': emit('close'); break
-    case 'ArrowLeft': if (props.hasPrev) emit('prev'); break
-    case 'ArrowRight': if (props.hasNext) emit('next'); break
-    case '+': case '=': zoom.value = Math.min(zoom.value + 0.25, 5); break
-    case '-': zoom.value = Math.max(zoom.value - 0.25, 0.25); break
-    case 'r': case 'R': rotation.value = (rotation.value + 90) % 360; break
-    case '0': zoom.value = 1; rotation.value = 0; break
-  }
-}
-
-let scrollDisabled = false
-onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
-  if (!scrollDisabled) {
-    document.body.style.overflow = 'hidden'
-    scrollDisabled = true
-  }
-})
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeydown)
-  document.body.style.overflow = ''
-  scrollDisabled = false
-})
-
 const isFavorited = collection.isCollected(props.data.id)
+
+const favIconStyle = {
+  fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+}
+const defaultIconStyle = {
+  fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+}
 
 function handleFavorite() {
   collection.toggle(props.data)
@@ -76,115 +54,219 @@ function handleDownload() {
 function handleImageLoad() {
   loading.value = false
 }
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+  switch (e.key) {
+    case 'Escape': emit('close'); break
+    case 'ArrowLeft': if (props.hasPrev) emit('prev'); break
+    case 'ArrowRight': if (props.hasNext) emit('next'); break
+  }
+}
+
+function toggleZoom() {
+  zoomed.value = !zoomed.value
+}
+
+let scrollDisabled = false
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  if (!scrollDisabled) {
+    document.body.style.overflow = 'hidden'
+    scrollDisabled = true
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+  scrollDisabled = false
+})
+
+// Category display name
+const categoryName = () => {
+  const map: Record<string, string> = {
+    '100': 'Anime',
+    '010': 'Anime',
+    '001': 'People',
+    '111': 'General',
+    '101': 'Anime',
+    '011': 'Anime',
+    '110': 'General',
+  }
+  return map[props.data.category] || props.data.category || 'General'
+}
+
+// Tags to display
+const displayTags = () => {
+  if (props.data.tags && props.data.tags.length > 0) {
+    return props.data.tags.slice(0, 6).map(t => t.name)
+  }
+  return props.data.colors?.slice(0, 4).map(c => `#${c}`) || []
+}
 </script>
 
 <template>
   <Teleport to="body">
     <transition name="detail-fade">
       <div
-        class="fixed inset-0 z-[99999] flex items-center justify-center"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12 modal-overlay"
         @click.self="emit('close')"
       >
-        <!-- Backdrop with aurora -->
-        <div class="absolute inset-0 bg-[#07071A]/92 backdrop-blur-3xl" />
-        <div class="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] via-transparent to-teal-400/[0.04]" />
-
-        <!-- Close button -->
-        <button
-          @click="emit('close')"
-          class="absolute top-5 right-5 z-20 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] text-white/30 hover:text-white border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 backdrop-blur-xl"
+        <div
+          class="max-w-6xl w-full max-h-[92%] light-glass-modal soft-glow overflow-hidden flex flex-col md:flex-row relative rounded-2xl shadow-xl"
         >
-          <X :size="20" />
-        </button>
-
-        <!-- Navigation arrows -->
-        <button
-          v-if="hasPrev"
-          @click.stop="emit('prev')"
-          class="absolute left-5 top-1/2 -translate-y-1/2 z-20 p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] text-white/20 hover:text-white border border-white/[0.04] hover:border-white/[0.1] transition-all duration-300 backdrop-blur-xl"
-        >
-          <ChevronLeft :size="28" />
-        </button>
-        <button
-          v-if="hasNext"
-          @click.stop="emit('next')"
-          class="absolute right-5 top-1/2 -translate-y-1/2 z-20 p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] text-white/20 hover:text-white border border-white/[0.04] hover:border-white/[0.1] transition-all duration-300 backdrop-blur-xl"
-        >
-          <ChevronRight :size="28" />
-        </button>
-
-        <!-- Image container -->
-        <div class="relative max-w-[90vw] max-h-[85vh] z-10 flex items-center justify-center">
-          <!-- Loading -->
-          <div
-            v-if="loading"
-            class="absolute inset-0 flex flex-col items-center justify-center gap-3"
-          >
-            <div class="w-8 h-8 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
-            <span class="text-white/10 text-xs">加载中…</span>
+          <!-- macOS-style window dots -->
+          <div class="absolute top-6 left-6 flex gap-2 z-50">
+            <button @click="emit('close')" class="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner hover:brightness-90 transition-all" />
+            <div class="w-3 h-3 rounded-full bg-[#FEBC2E] shadow-inner" />
+            <div class="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
           </div>
 
-          <!-- Image -->
-          <img
-            v-show="!loading"
-            :src="fullImageUrl"
-            :alt="`Wallpaper ${data.id}`"
-            class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-[0_0_120px_rgba(139,92,246,0.1)] transition-all duration-300 ease-out select-none"
-            :class="{ 'cursor-zoom-in': zoom === 1 }"
-            :style="{
-              transform: `scale(${zoom}) rotate(${rotation}deg)`,
-            }"
-            draggable="false"
-            @load="handleImageLoad"
-          />
-        </div>
-
-        <!-- Info panel -->
-        <div class="absolute left-8 bottom-28 z-20">
-          <div class="px-4 py-3 rounded-2xl bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05]">
-            <p class="text-sm font-medium text-white/80">{{ data.id }}</p>
-            <p class="text-xs text-white/20 mt-1">
-              {{ data.resolution }}
-              <span class="mx-1.5 opacity-20">&middot;</span>
-              {{ data.file_type?.toUpperCase() }}
-              <span v-if="data.file_size" class="mx-1.5 opacity-20">&middot;</span>
-              <span v-if="data.file_size">{{ (data.file_size / 1024 / 1024).toFixed(1) }}MB</span>
-            </p>
-          </div>
-        </div>
-
-        <!-- Control toolbar -->
-        <div class="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.05]">
-          <button @click="zoom = Math.max(zoom - 0.25, 0.25)" class="toolbar-btn" title="缩小 (-)">
-            <ZoomOut :size="17" />
-          </button>
-          <span class="text-xs text-white/35 w-12 text-center tabular-nums font-medium">
-            {{ Math.round(zoom * 100) }}%
-          </span>
-          <button @click="zoom = Math.min(zoom + 0.25, 5)" class="toolbar-btn" title="放大 (+)">
-            <ZoomIn :size="17" />
-          </button>
-
-          <div class="w-px h-6 bg-white/[0.06] mx-2" />
-
-          <button @click="rotation = (rotation + 90) % 360" class="toolbar-btn" title="旋转 (R)">
-            <RotateCw :size="17" />
-          </button>
-
-          <div class="w-px h-6 bg-white/[0.06] mx-2" />
-
+          <!-- Navigation arrows -->
           <button
-            @click="handleFavorite"
-            class="toolbar-btn"
-            :class="isFavorited ? '!text-rose-400 !bg-rose-500/10' : ''"
-            :title="isFavorited ? '取消收藏' : '收藏'"
+            v-if="hasPrev"
+            @click.stop="emit('prev')"
+            class="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full bg-black/10 backdrop-blur-md border border-black/5 flex items-center justify-center hover:bg-black/20 transition-all text-on-surface-variant"
           >
-            <Heart :size="17" :fill="isFavorited ? 'currentColor' : 'none'" />
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button
+            v-if="hasNext"
+            @click.stop="emit('next')"
+            class="absolute right-[420px] top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full bg-black/10 backdrop-blur-md border border-black/5 flex items-center justify-center hover:bg-black/20 transition-all text-on-surface-variant"
+          >
+            <span class="material-symbols-outlined">chevron_right</span>
           </button>
 
-          <button @click="handleDownload" class="toolbar-btn" title="下载">
-            <Download :size="17" />
-          </button>
+          <!-- Left: Image Preview -->
+          <div class="flex-1 bg-black/5 flex items-center justify-center p-4 relative">
+            <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-black/5 group">
+              <!-- Loading -->
+              <div
+                v-if="loading"
+                class="absolute inset-0 flex items-center justify-center bg-black/5"
+              >
+                <div class="flex gap-2">
+                  <span v-for="i in 3" :key="i" class="w-2 h-2 rounded-full bg-primary/40 animate-bounce" :style="{ animationDelay: `${i * 0.15}s` }" />
+                </div>
+              </div>
+
+              <img
+                v-show="!loading"
+                :src="fullImageUrl"
+                :alt="`Wallpaper ${data.id}`"
+                class="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
+                :class="{ 'scale-150': zoomed }"
+                draggable="false"
+                @load="handleImageLoad"
+                @click="toggleZoom"
+              />
+
+              <!-- Image controls -->
+              <div class="absolute bottom-6 right-6 flex gap-3">
+                <button
+                  @click="toggleZoom"
+                  class="bg-black/20 backdrop-blur-xl hover:bg-black/40 p-2.5 rounded-xl text-white transition-all border border-white/20"
+                >
+                  <span class="material-symbols-outlined">{{ zoomed ? 'zoom_out' : 'zoom_in' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Detail Panel -->
+          <div class="w-full md:w-[400px] p-8 flex flex-col gap-8 bg-white/10 backdrop-blur-2xl border-l border-black/5 overflow-y-auto">
+            <!-- Title & Author -->
+            <div>
+              <h2 class="font-headline-lg text-headline-lg text-modal-primary mb-2">
+                Wallpaper {{ data.id }}
+              </h2>
+              <p class="font-body-md text-modal-secondary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-primary">palette</span>
+                By {{ data.uploader?.username || 'wallhaven' }}
+              </p>
+            </div>
+
+            <!-- Resolution & Category -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-black/5 p-4 rounded-2xl border border-black/5">
+                <span class="block font-label-caps text-modal-secondary mb-1">RESOLUTION</span>
+                <span class="font-headline-md text-modal-primary">{{ data.resolution }}</span>
+              </div>
+              <div class="bg-black/5 p-4 rounded-2xl border border-black/5">
+                <span class="block font-label-caps text-modal-secondary mb-1">CATEGORY</span>
+                <span class="font-headline-md text-modal-primary">{{ categoryName() }}</span>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div v-if="displayTags().length > 0">
+              <span class="block font-label-caps text-modal-secondary mb-4">METADATA TAGS</span>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="tag in displayTags()"
+                  :key="tag"
+                  class="px-4 py-1.5 bg-black/5 border border-black/5 rounded-full font-body-sm text-modal-primary"
+                >{{ tag }}</span>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex gap-4 text-modal-secondary font-body-sm">
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">visibility</span>
+                {{ data.views?.toLocaleString() || 0 }}
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">favorite</span>
+                {{ data.favorites?.toLocaleString() || 0 }}
+              </span>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-auto flex flex-col gap-3">
+              <button
+                @click="handleDownload"
+                class="w-full py-4 bg-[#FF7D4E] text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20"
+              >
+                <span class="material-symbols-outlined">download</span>
+                Download Wallpaper
+              </button>
+              <div class="flex gap-3">
+                <button
+                  @click="handleFavorite"
+                  class="flex-1 py-4 bg-black/5 border border-black/5 rounded-2xl text-modal-primary font-headline-md flex items-center justify-center gap-3 hover:bg-black/10 transition-all"
+                  :class="{ '!bg-primary/10 !border-primary/20 !text-primary': isFavorited }"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    :class="{ 'text-[#FF7D4E]': !isFavorited }"
+                    :style="isFavorited ? favIconStyle : defaultIconStyle"
+                  >favorite</span>
+                  {{ isFavorited ? 'Favorited' : 'Favorite' }}
+                </button>
+                <button
+                  class="w-16 py-4 bg-black/5 border border-black/5 rounded-2xl text-modal-primary flex items-center justify-center hover:bg-black/10 transition-all"
+                >
+                  <span class="material-symbols-outlined">share</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Social proof -->
+            <div class="pt-6 border-t border-black/5">
+              <div class="flex items-center justify-between">
+                <div class="flex -space-x-3">
+                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-primary-container shadow-lg" />
+                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-secondary-container shadow-lg" />
+                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-orange-400/60 shadow-lg" />
+                </div>
+                <span class="font-body-sm text-modal-secondary">Used by 1.2k creatives</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </transition>
@@ -193,29 +275,15 @@ function handleImageLoad() {
 
 <style scoped>
 .detail-fade-enter-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease-out;
 }
-.detail-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.detail-fade-enter-from,
-.detail-fade-leave-to {
+.detail-fade-enter-from {
   opacity: 0;
 }
-.toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.55rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  transition: all 0.2s ease;
+.detail-fade-leave-active {
+  transition: opacity 0.2s ease-out;
 }
-.toolbar-btn:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background-color: rgba(139, 92, 246, 0.12);
+.detail-fade-leave-to {
+  opacity: 0;
 }
 </style>

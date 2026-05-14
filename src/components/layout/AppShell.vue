@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, provide } from 'vue'
 import { RouterView } from 'vue-router'
-import Titlebar from './Titlebar.vue'
 import Sidebar from './Sidebar.vue'
+import GlobalHeader from '@/components/wallpaper/GlobalHeader.vue'
+import WallpaperDetail from '@/components/wallpaper/WallpaperDetail.vue'
 import type { WallpaperData } from '@/types/wallhaven'
 
 const detailTarget = ref<WallpaperData | null>(null)
@@ -46,26 +47,33 @@ provide('closeDetail', closeDetail)
 </script>
 
 <template>
-  <div class="app-shell flex h-screen w-screen overflow-hidden aurora-bg">
-    <Titlebar />
+  <div class="flex h-screen overflow-hidden bg-background">
+    <!-- Sidebar Navigation (fixed, matching layout.html) -->
+    <Sidebar />
 
-    <div class="flex flex-1 pt-9">
-      <Sidebar />
+    <!-- Main Content Area (ml-[280px] matching layout.html sidebar width) -->
+    <main class="flex-1 relative z-10 flex flex-col h-screen overflow-hidden">
+      <!-- Global Header (SFW/Sketchy/NSFW, Sort/Res dropdowns, Search) -->
+      <GlobalHeader />
 
-      <!-- Main content area -->
-      <main class="flex-1 overflow-hidden relative z-10">
-        <RouterView v-slot="{ Component }">
-          <transition name="page-fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </RouterView>
-      </main>
-    </div>
+      <!-- Page Content -->
+      <RouterView v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </RouterView>
+
+      <!-- Floating Action Button (FAB) -->
+      <button
+        class="fixed bottom-10 right-10 w-16 h-16 rounded-full bg-primary text-on-primary shadow-[0_0_40px_rgba(70,72,212,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 z-50"
+      >
+        <span class="material-symbols-outlined text-[32px]">add</span>
+      </button>
+    </main>
 
     <!-- Wallpaper Detail Lightbox -->
     <template v-if="detailVisible && detailTarget">
-      <component
-        :is="() => import('@/components/wallpaper/WallpaperDetail.vue')"
+      <WallpaperDetail
         :data="detailTarget"
         :has-prev="detailIndex > 0"
         :has-next="detailIndex < detailList.length - 1"
@@ -76,26 +84,3 @@ provide('closeDetail', closeDetail)
     </template>
   </div>
 </template>
-
-<style scoped>
-.app-shell {
-  background:
-    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(139, 92, 246, 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 80% at 90% 90%, rgba(45, 212, 191, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 60%),
-    var(--bg-base);
-}
-
-.page-fade-enter-active,
-.page-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.page-fade-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-.page-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-</style>
