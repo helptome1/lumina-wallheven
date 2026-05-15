@@ -11,6 +11,25 @@ export const useFilterStore = defineStore('filter', () => {
     page: 1,
   })
 
+  const purityKeys = reactive({
+    sfw: true,
+    sketchy: false,
+    nsfw: false,
+  })
+
+  function getPurity(): string {
+    return (purityKeys.sfw ? '1' : '0')
+         + (purityKeys.sketchy ? '1' : '0')
+         + (purityKeys.nsfw ? '1' : '0')
+  }
+
+  function togglePurityKey(key: 'sfw' | 'sketchy' | 'nsfw') {
+    const selected = Object.entries(purityKeys).filter(([, v]) => v)
+    if (selected.length === 1 && selected[0][0] === key) return
+    purityKeys[key] = !purityKeys[key]
+    params.purity = getPurity()
+  }
+
   function setPurity(purity: string) {
     params.purity = purity
   }
@@ -31,5 +50,5 @@ export const useFilterStore = defineStore('filter', () => {
     return { ...params }
   }
 
-  return { params, setPurity, setSorting, setAtleast, setQuery, getSnapshot }
+  return { params, purityKeys, togglePurityKey, setPurity, setSorting, setAtleast, setQuery, getSnapshot }
 })

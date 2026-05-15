@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import WallpaperGrid from '@/components/wallpaper/WallpaperGrid.vue'
 import { useBrowsePage } from '@/composables/useBrowsePage'
 import { useFilterStore } from '@/stores/filter'
@@ -12,6 +12,13 @@ const { store, hasMore, onLoadMore, onSearch, onDownload } = useBrowsePage({
   sorting: filterStore.params.sorting || 'toplist',
   atleast: filterStore.params.atleast || '3840x2160',
   q: filterStore.params.q || '',
+})
+
+const emptyDescription = computed(() => {
+  if (filterStore.purityKeys.nsfw && !localStorage.getItem('wallhaven-api-key')) {
+    return '请在设置中配置 ApiKey'
+  }
+  return undefined
 })
 
 // React to filter store changes
@@ -29,6 +36,7 @@ watch(
       :wallpapers="store.wallpapers"
       :loading="store.loading"
       :has-more="hasMore"
+      :empty-description="emptyDescription"
       @load-more="onLoadMore"
       @download="onDownload"
     />

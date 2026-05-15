@@ -46,7 +46,7 @@ const handleDownload = (e: Event) => {
 
 <template>
   <div
-    class="group relative aspect-[4/3] overflow-hidden rounded-[2rem] border shadow-xl transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+    class="group relative aspect-[4/3] overflow-hidden rounded-[2rem] border-2 shadow-xl transition-all duration-500 hover:scale-[1.02] cursor-pointer"
     :style="{ borderColor: purityBorderColor }"
     @click="openDetail(data)"
   >

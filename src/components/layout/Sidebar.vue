@@ -24,6 +24,7 @@ const navGroups = [
   {
     label: '其他',
     items: [
+      { id: 'settings', label: '设置', path: '/settings', icon: 'settings' },
       { id: 'about', label: '关于', path: '/about', icon: 'info' },
     ],
   },

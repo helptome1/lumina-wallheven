@@ -16,6 +16,7 @@ const router = createRouter({
         { path: 'download', name: 'download', component: () => import('@/views/DownloadView.vue'), meta: { title: '下载中心', icon: 'Download' } },
         { path: 'downloads', redirect: '/download' },
         { path: 'about', name: 'about', component: () => import('@/views/AboutView.vue'), meta: { title: '关于', icon: 'Info' } },
+        { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: '设置', icon: 'Settings' } },
       ],
     },
   ],

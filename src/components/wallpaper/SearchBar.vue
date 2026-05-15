@@ -17,10 +17,48 @@ const sortOpen = ref(false)
 const resOpen = ref(false)
 
 const purityOptions = [
-  { label: 'SFW', value: '100' },
-  { label: 'Sketchy', value: '010' },
-  { label: 'NSFW', value: '001' },
+  { label: 'SFW', key: 'sfw' as const },
+  { label: 'Sketchy', key: 'sketchy' as const },
+  { label: 'NSFW', key: 'nsfw' as const },
 ]
+
+const purityActiveStyles: Record<string, { backgroundImage: string; boxShadow: string; color: string }> = {
+  sfw: {
+    backgroundImage: 'linear-gradient(to bottom, #595 0%, #353 100%)',
+    boxShadow: '0 0 24px rgba(85,153,85,0.45), 0 0 48px rgba(85,153,85,0.18)',
+    color: '#9f9',
+  },
+  sketchy: {
+    backgroundImage: 'linear-gradient(to bottom, #995 0%, #553 100%)',
+    boxShadow: '0 0 24px rgba(153,153,85,0.45), 0 0 48px rgba(153,153,85,0.18)',
+    color: '#ff9',
+  },
+  nsfw: {
+    backgroundImage: 'linear-gradient(to bottom, #955 0%, #533 100%)',
+    boxShadow: '0 0 24px rgba(153,85,85,0.45), 0 0 48px rgba(153,85,85,0.18)',
+    color: '#fcc',
+  },
+}
+
+const puritySelection = reactive({
+  sfw: true,
+  sketchy: false,
+  nsfw: false,
+})
+
+function getPurity(): string {
+  return (puritySelection.sfw ? '1' : '0')
+       + (puritySelection.sketchy ? '1' : '0')
+       + (puritySelection.nsfw ? '1' : '0')
+}
+
+function onPurityToggle(key: 'sfw' | 'sketchy' | 'nsfw') {
+  const selected = purityOptions.filter(o => puritySelection[o.key])
+  if (selected.length === 1 && selected[0].key === key) return
+  puritySelection[key] = !puritySelection[key]
+  params.purity = getPurity()
+  doSearch()
+}
 
 const sortingOptions = [
   { label: 'Top', value: 'toplist' },
@@ -45,11 +83,6 @@ const currentResLabel = ref('4K+')
 function doSearch() {
   params.page = 1
   emit('search', { ...params })
-}
-
-function onPurityChange(value: string) {
-  params.purity = value
-  doSearch()
 }
 
 function onSortChange(opt: typeof sortingOptions[number]) {
@@ -83,19 +116,20 @@ function onSearchKeyup(e: KeyboardEvent) {
 
 <template>
   <header
-    class="h-20 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
+    class="w-full h-20 shrink-0 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
   >
-    <div class="flex items-center gap-6">
-      <!-- Purity Toggle -->
-      <div class="flex bg-surface-container-high/30 p-1 rounded-xl border border-black/5">
+    <div class="flex items-center gap-3">
+      <!-- Purity Toggle (multi-select) -->
+      <div class="flex gap-1 bg-surface-container-high/30 p-1 rounded-xl border border-black/5">
         <button
           v-for="opt in purityOptions"
-          :key="opt.value"
-          @click="onPurityChange(opt.value)"
-          class="px-5 py-1.5 rounded-lg text-label-caps font-bold transition-all"
-          :class="params.purity === opt.value
-            ? 'bg-primary text-on-primary shadow-md shadow-primary/10'
+          :key="opt.key"
+          @click="onPurityToggle(opt.key)"
+          class="px-3 py-2 rounded-lg text-label-caps font-bold transition-all duration-300"
+          :class="puritySelection[opt.key]
+            ? ''
             : 'text-on-surface-variant hover:text-on-surface font-medium'"
+          :style="puritySelection[opt.key] ? purityActiveStyles[opt.key] : {}"
         >
           {{ opt.label }}
         </button>
@@ -105,7 +139,7 @@ function onSearchKeyup(e: KeyboardEvent) {
       <div class="relative">
         <button
           @click="toggleSort"
-          class="flex items-center gap-2 bg-black/5 hover:bg-black/10 px-4 py-2 rounded-xl border border-black/5 transition-all"
+          class="flex items-center gap-1.5 bg-black/5 hover:bg-black/10 px-3 py-2 rounded-xl border border-black/5 transition-all"
         >
           <span class="text-label-caps text-on-surface-variant">Sort:</span>
           <span class="text-label-caps text-on-surface font-bold">{{ currentSortLabel }}</span>
@@ -131,7 +165,7 @@ function onSearchKeyup(e: KeyboardEvent) {
       <div class="relative">
         <button
           @click="toggleRes"
-          class="flex items-center gap-2 bg-black/5 hover:bg-black/10 px-4 py-2 rounded-xl border border-black/5 transition-all"
+          class="flex items-center gap-1.5 bg-black/5 hover:bg-black/10 px-3 py-2 rounded-xl border border-black/5 transition-all"
         >
           <span class="text-label-caps text-on-surface-variant">Res:</span>
           <span class="text-label-caps text-on-surface font-bold">{{ currentResLabel }}</span>
@@ -155,23 +189,23 @@ function onSearchKeyup(e: KeyboardEvent) {
     </div>
 
     <!-- Search and Actions -->
-    <div class="flex items-center gap-6 flex-1 max-w-xl justify-end">
-      <div class="relative w-full max-w-sm">
-        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+    <div class="flex items-center gap-3 flex-1 max-w-xl justify-end ml-6">
+      <div class="relative w-full max-w-xs">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
         <input
           v-model="params.q"
-          class="w-full bg-white/60 border border-black/5 rounded-full py-2.5 pl-12 pr-4 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all backdrop-blur-xl placeholder:text-on-surface-variant/50"
-          placeholder="Explore 4K wallpapers..."
+          class="w-full bg-white/60 border border-black/5 rounded-full py-2 pl-10 pr-3 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all backdrop-blur-xl placeholder:text-on-surface-variant/50"
+          placeholder="搜索 4K 壁纸…"
           type="text"
           @keyup="onSearchKeyup"
         />
       </div>
-      <div class="flex items-center gap-5 text-on-surface-variant">
-        <button class="hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">settings</span>
+      <div class="flex items-center gap-3 text-on-surface-variant">
+        <button class="hover:text-primary transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
         </button>
-        <button class="hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">account_circle</span>
+        <button class="hover:text-primary transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">account_circle</span>
         </button>
       </div>
     </div>

@@ -285,11 +285,13 @@ pub async fn fetch_wallpaper_image(
     Ok(local_path.to_string_lossy().to_string())
 }
 
-/// Proxy wallhaven.cc API requests through Rust backend to bypass CORS
+/// Proxy wallhaven.cc API requests through Rust backend to bypass CORS.
+/// API key is passed via X-API-Key header (recommended by Wallhaven docs).
 #[tauri::command]
 pub async fn fetch_wallhaven_api(
     endpoint: String,
     params: std::collections::HashMap<String, String>,
+    api_key: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let base_url = "https://wallhaven.cc/api/v1";
     let url = format!("{}{}", base_url, endpoint);
@@ -299,9 +301,15 @@ pub async fn fetch_wallhaven_api(
         .build()
         .map_err(|e| e.to_string())?;
 
-    let response = client
-        .get(&url)
-        .query(&params)
+    let mut request = client.get(&url).query(&params);
+
+    if let Some(key) = &api_key {
+        if !key.is_empty() {
+            request = request.header("X-API-Key", key);
+        }
+    }
+
+    let response = request
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;

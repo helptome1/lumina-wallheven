@@ -8,10 +8,32 @@ const sortOpen = ref(false)
 const resOpen = ref(false)
 
 const purityOptions = [
-  { label: 'SFW', value: '100' },
-  { label: 'Sketchy', value: '010' },
-  { label: 'NSFW', value: '001' },
+  { label: 'SFW', key: 'sfw' as const },
+  { label: 'Sketchy', key: 'sketchy' as const },
+  { label: 'NSFW', key: 'nsfw' as const },
 ]
+
+const purityActiveStyles: Record<string, { backgroundImage: string; boxShadow: string; color: string }> = {
+  sfw: {
+    backgroundImage: 'linear-gradient(to bottom, #595 0%, #353 100%)',
+    boxShadow: '0 0 24px rgba(85,153,85,0.45), 0 0 48px rgba(85,153,85,0.18)',
+    color: '#9f9',
+  },
+  sketchy: {
+    backgroundImage: 'linear-gradient(to bottom, #995 0%, #553 100%)',
+    boxShadow: '0 0 24px rgba(153,153,85,0.45), 0 0 48px rgba(153,153,85,0.18)',
+    color: '#ff9',
+  },
+  nsfw: {
+    backgroundImage: 'linear-gradient(to bottom, #955 0%, #533 100%)',
+    boxShadow: '0 0 24px rgba(153,85,85,0.45), 0 0 48px rgba(153,85,85,0.18)',
+    color: '#fcc',
+  },
+}
+
+function onPurityToggle(key: 'sfw' | 'sketchy' | 'nsfw') {
+  filterStore.togglePurityKey(key)
+}
 
 const sortingOptions = [
   { label: 'Top', value: 'toplist' },
@@ -43,10 +65,6 @@ watch(() => filterStore.params.atleast, (val) => {
   const opt = resolutionOptions.find(o => o.value === val)
   if (opt !== undefined) currentResLabel.value = opt.label
 }, { immediate: true })
-
-function onPurityChange(value: string) {
-  filterStore.setPurity(value)
-}
 
 function onSortChange(opt: typeof sortingOptions[number]) {
   filterStore.setSorting(opt.value)
@@ -88,19 +106,20 @@ if (typeof document !== 'undefined') {
 
 <template>
   <header
-    class="w-full h-20 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
+    class="w-full h-20 shrink-0 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
   >
     <div class="flex items-center gap-6">
-      <!-- Purity Toggle -->
-      <div class="flex bg-surface-container-high/30 p-1 rounded-xl border border-black/5">
+      <!-- Purity Toggle (multi-select) -->
+      <div class="flex gap-1 bg-surface-container-high/30 p-1 rounded-xl border border-black/5">
         <button
           v-for="opt in purityOptions"
-          :key="opt.value"
-          @click="onPurityChange(opt.value)"
-          class="px-5 py-1.5 rounded-lg text-label-caps transition-colors"
-          :class="filterStore.params.purity === opt.value
-            ? 'bg-primary text-on-primary font-bold shadow-md shadow-primary/10'
+          :key="opt.key"
+          @click="onPurityToggle(opt.key)"
+          class="px-3 py-2 rounded-lg text-label-caps font-bold transition-all duration-300"
+          :class="filterStore.purityKeys[opt.key]
+            ? ''
             : 'text-on-surface-variant hover:text-on-surface font-medium'"
+          :style="filterStore.purityKeys[opt.key] ? purityActiveStyles[opt.key] : {}"
         >
           {{ opt.label }}
         </button>
@@ -160,7 +179,7 @@ if (typeof document !== 'undefined') {
     </div>
 
     <!-- Search and Actions -->
-    <div class="flex items-center gap-6 flex-1 max-w-xl justify-end">
+    <div class="flex items-center gap-4 flex-1 max-w-xl justify-end ml-6">
       <div class="relative w-full max-w-sm">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
         <input

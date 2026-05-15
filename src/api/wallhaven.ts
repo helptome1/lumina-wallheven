@@ -12,9 +12,12 @@ class WallhavenAPI {
       }
     }
 
+    const apiKey = localStorage.getItem('wallhaven-api-key') || null
+
     const result = await invoke<SearchResponse>('fetch_wallhaven_api', {
       endpoint: '/search',
       params: queryParams,
+      apiKey,
     })
 
     return result

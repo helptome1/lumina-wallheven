@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref, provide, watch } from 'vue'
 import { RouterView } from 'vue-router'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import Sidebar from './Sidebar.vue'
 import GlobalHeader from '@/components/wallpaper/GlobalHeader.vue'
 import WallpaperDetail from '@/components/wallpaper/WallpaperDetail.vue'
 import ToastViewport from '@/components/common/ToastViewport.vue'
+import { useWallpaperStore } from '@/stores/wallpaper'
 import type { WallpaperData } from '@/types/wallhaven'
 
 const detailTarget = ref<WallpaperData | null>(null)
@@ -54,15 +55,43 @@ const startWindowDrag = async (event: PointerEvent) => {
   }
 }
 
+const wallpaperStore = useWallpaperStore()
+const bgImageUrl = ref('')
+const bgLoaded = ref(false)
+
+watch(() => wallpaperStore.wallpapers, (papers) => {
+  if (papers.length === 0) return
+  const best = papers.reduce((a, b) => (a.favorites || 0) > (b.favorites || 0) ? a : b)
+  const thumb = best.thumbs.small
+  if (!thumb || thumb === bgImageUrl.value) return
+  const img = new Image()
+  img.onload = () => {
+    bgImageUrl.value = thumb
+    bgLoaded.value = true
+  }
+  img.src = thumb
+})
+
 provide('openDetail', openDetail)
 provide('closeDetail', closeDetail)
 </script>
 
 <template>
   <div class="app-window-shell flex h-screen overflow-hidden text-on-surface bg-background">
-    <!-- Background Layer (matching layout.html) -->
+    <!-- Background Layer -->
     <div class="absolute inset-0 z-0 overflow-hidden rounded-[24px]">
-      <div class="w-full h-full bg-gradient-to-br from-primary-fixed/20 via-surface-bright/40 to-tertiary-fixed/20" />
+      <!-- Ambient gradient (always visible) -->
+      <div class="absolute inset-0 bg-gradient-to-br from-primary-fixed/20 via-surface-bright/40 to-tertiary-fixed/20" />
+      <!-- Wallpaper thumbnail background (blurred) -->
+      <div
+        v-if="bgImageUrl"
+        class="absolute inset-0 bg-cover bg-center scale-110 transition-opacity duration-1000"
+        :class="bgLoaded ? 'opacity-40' : 'opacity-0'"
+        :style="{
+          backgroundImage: `url(${bgImageUrl})`,
+          filter: 'blur(24px) saturate(1.3)',
+        }"
+      />
     </div>
 
     <!-- Invisible drag handle for the undecorated Tauri window -->

@@ -10,6 +10,8 @@ const props = defineProps<{
   wallpapers: WallpaperData[]
   loading: boolean
   hasMore: boolean
+  emptyTitle?: string
+  emptyDescription?: string
 }>()
 
 const emit = defineEmits<{
@@ -30,7 +32,10 @@ useIntersectionObserver(
       setTimeout(() => { isExecuting = false }, 300)
     }
   },
-  { threshold: 0 },
+  {
+    threshold: 0,
+    rootMargin: '0px 0px 200px 0px',
+  },
 )
 </script>
 
@@ -68,13 +73,13 @@ useIntersectionObserver(
     </div>
 
     <!-- Sentinel for infinite scroll — must be inside the scroll container -->
-    <div ref="sentinel" class="h-1 w-full" />
+    <div ref="sentinel" class="h-24 w-full" />
 
     <!-- Empty state -->
     <EmptyState
       v-if="!loading && wallpapers.length === 0"
-      title="No wallpapers found"
-      description="Try adjusting your search filters"
+      :title="emptyTitle || 'No wallpapers found'"
+      :description="emptyDescription || 'Try adjusting your search filters'"
     />
   </div>
 </template>

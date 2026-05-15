@@ -12,7 +12,7 @@ defineProps<{
     </div>
     <div class="text-center">
       <h3 class="text-base font-medium text-on-surface-variant/60">{{ title }}</h3>
-      <p v-if="description" class="text-sm text-on-surface-variant/40 mt-1.5">{{ description }}</p>
+      <p v-if="description" class="text-sm font-semibold text-on-surface-variant/75 mt-1.5">{{ description }}</p>
     </div>
   </div>
 </template>
