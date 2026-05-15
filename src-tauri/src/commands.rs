@@ -123,6 +123,75 @@ pub async fn get_app_data_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Proxy wallpaper image through Rust backend to bypass CDN hotlinking (403)
+/// Downloads the image to local cache dir and returns the local file path.
+#[tauri::command]
+pub async fn fetch_wallpaper_image(
+    app: AppHandle,
+    path: String,
+) -> Result<String, String> {
+    let cache_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("cache")
+        .join("images");
+
+    tokio::fs::create_dir_all(&cache_dir)
+        .await
+        .map_err(|e| format!("Failed to create cache dir: {}", e))?;
+
+    let file_name = std::path::Path::new(&path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "wallpaper.jpg".into());
+
+    let local_path = cache_dir.join(&file_name);
+
+    // Return cached file if it exists
+    if local_path.exists() {
+        return Ok(local_path.to_string_lossy().to_string());
+    }
+
+    let cdn_base = "https://w.wallhaven.cc/full/";
+    let url = if path.starts_with("https://") || path.starts_with("http://") {
+        path.clone()
+    } else {
+        format!("{}{}", cdn_base, path.trim_start_matches('/'))
+    };
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client
+        .get(&url)
+        .header("Referer", "https://wallhaven.cc/")
+        .send()
+        .await
+        .map_err(|e| format!("Image request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "CDN Error: {} {}",
+            response.status().as_u16(),
+            response.status().canonical_reason().unwrap_or("Unknown")
+        ));
+    }
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read image bytes: {}", e))?;
+
+    tokio::fs::write(&local_path, &bytes)
+        .await
+        .map_err(|e| format!("Failed to write image file: {}", e))?;
+
+    Ok(local_path.to_string_lossy().to_string())
+}
+
 /// Proxy wallhaven.cc API requests through Rust backend to bypass CORS
 #[tauri::command]
 pub async fn fetch_wallhaven_api(

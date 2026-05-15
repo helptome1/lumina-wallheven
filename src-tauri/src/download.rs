@@ -65,8 +65,15 @@ pub async fn execute_download(
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
+    let cdn_url = if request.url.starts_with("https://") || request.url.starts_with("http://") {
+        request.url.clone()
+    } else {
+        format!("https://w.wallhaven.cc/full/{}", request.url.trim_start_matches('/'))
+    };
+
     let response = client
-        .get(&request.url)
+        .get(&cdn_url)
+        .header("Referer", "https://wallhaven.cc/")
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;

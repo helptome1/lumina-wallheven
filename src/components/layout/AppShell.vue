@@ -47,7 +47,12 @@ provide('closeDetail', closeDetail)
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-background">
+  <div class="flex h-screen overflow-hidden text-on-surface bg-background">
+    <!-- Background Layer (matching layout.html) -->
+    <div class="fixed inset-0 z-0 overflow-hidden">
+      <div class="w-full h-full bg-gradient-to-br from-primary-fixed/20 via-surface-bright/40 to-tertiary-fixed/20" />
+    </div>
+
     <!-- Sidebar Navigation (fixed, matching layout.html) -->
     <Sidebar />
 

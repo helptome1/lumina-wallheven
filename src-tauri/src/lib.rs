@@ -56,6 +56,7 @@ pub fn run() {
             commands::clear_download,
             commands::open_download_folder,
             commands::get_app_data_path,
+            commands::fetch_wallpaper_image,
             commands::fetch_wallhaven_api,
         ])
         .run(tauri::generate_context!())

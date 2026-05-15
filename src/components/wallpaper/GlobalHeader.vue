@@ -88,7 +88,7 @@ if (typeof document !== 'undefined') {
 
 <template>
   <header
-    class="h-20 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
+    class="w-full h-20 sticky top-0 z-50 flex justify-between items-center px-10 m-4 rounded-2xl border border-black/5 bg-white/40 backdrop-blur-[40px]"
   >
     <div class="flex items-center gap-6">
       <!-- Purity Toggle -->
@@ -97,7 +97,7 @@ if (typeof document !== 'undefined') {
           v-for="opt in purityOptions"
           :key="opt.value"
           @click="onPurityChange(opt.value)"
-          class="px-5 py-1.5 rounded-lg text-label-caps transition-all"
+          class="px-5 py-1.5 rounded-lg text-label-caps transition-colors"
           :class="filterStore.params.purity === opt.value
             ? 'bg-primary text-on-primary font-bold shadow-md shadow-primary/10'
             : 'text-on-surface-variant hover:text-on-surface font-medium'"

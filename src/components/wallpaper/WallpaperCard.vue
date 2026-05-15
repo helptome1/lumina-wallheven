@@ -41,6 +41,7 @@ const handleDownload = (e: Event) => {
       loading="lazy"
       class="w-full h-full object-cover"
       draggable="false"
+      referrerpolicy="no-referrer"
     />
 
     <!-- Hover Overlay -->

@@ -160,6 +160,7 @@ const displayTags = () => {
                 class="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
                 :class="{ 'scale-150': zoomed }"
                 draggable="false"
+                referrerpolicy="no-referrer"
                 @load="handleImageLoad"
                 @click="toggleZoom"
               />
