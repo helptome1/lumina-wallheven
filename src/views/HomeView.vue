@@ -6,7 +6,7 @@ import { useFilterStore } from '@/stores/filter'
 
 const filterStore = useFilterStore()
 
-const { store, hasMore, target, onSearch, onDownload } = useBrowsePage({
+const { store, hasMore, onLoadMore, onSearch, onDownload } = useBrowsePage({
   categories: '111',
   purity: filterStore.params.purity || '100',
   sorting: filterStore.params.sorting || 'toplist',
@@ -29,8 +29,8 @@ watch(
       :wallpapers="store.wallpapers"
       :loading="store.loading"
       :has-more="hasMore"
+      @load-more="onLoadMore"
       @download="onDownload"
     />
-    <div ref="target" class="absolute bottom-0 left-0 right-0 h-1 pointer-events-none" />
   </div>
 </template>

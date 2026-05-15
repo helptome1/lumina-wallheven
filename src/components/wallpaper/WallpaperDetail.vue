@@ -27,8 +27,13 @@ const previewImageUrl = ref('')
 const loading = ref(true)
 const zoomed = ref(false)
 const dragging = ref(false)
+const isDragging = ref(false)
 const panX = ref(0)
 const panY = ref(0)
+
+// Template refs for direct DOM manipulation during drag
+const previewImgRef = ref<HTMLImageElement | null>(null)
+const fullImgRef = ref<HTMLImageElement | null>(null)
 
 let dragStartX = 0
 let dragStartY = 0
@@ -36,6 +41,11 @@ let dragOriginX = 0
 let dragOriginY = 0
 let dragged = false
 let suppressNextClick = false
+
+// rAF throttle state
+let latestClientX = 0
+let latestClientY = 0
+let rafPending = false
 
 const imageViewportClass = computed(() => {
   if (!zoomed.value) return 'cursor-zoom-in'
@@ -120,16 +130,31 @@ function handleImageClick() {
   toggleZoom()
 }
 
+function applyDragTransform(x: number, y: number) {
+  const val = `translate3d(${x}px, ${y}px, 0) scale(1.7)`
+  if (previewImgRef.value) previewImgRef.value.style.transform = val
+  if (fullImgRef.value) fullImgRef.value.style.transform = val
+}
+
+function setDragTransition(on: boolean) {
+  const val = on ? '' : 'none'
+  if (previewImgRef.value) previewImgRef.value.style.transition = val
+  if (fullImgRef.value) fullImgRef.value.style.transition = val
+}
+
 function handlePointerDown(event: PointerEvent) {
   if (!zoomed.value) return
   if ((event.target as HTMLElement).closest('button')) return
 
   dragging.value = true
+  isDragging.value = true
   dragged = false
   dragStartX = event.clientX
   dragStartY = event.clientY
   dragOriginX = panX.value
   dragOriginY = panY.value
+
+  setDragTransition(false)
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
   event.preventDefault()
 }
@@ -137,24 +162,40 @@ function handlePointerDown(event: PointerEvent) {
 function handlePointerMove(event: PointerEvent) {
   if (!dragging.value) return
 
-  const deltaX = event.clientX - dragStartX
-  const deltaY = event.clientY - dragStartY
-  if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) dragged = true
+  latestClientX = event.clientX
+  latestClientY = event.clientY
 
-  panX.value = dragOriginX + deltaX
-  panY.value = dragOriginY + deltaY
+  if (!rafPending) {
+    rafPending = true
+    requestAnimationFrame(() => {
+      rafPending = false
+      const dx = latestClientX - dragStartX
+      const dy = latestClientY - dragStartY
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true
+      applyDragTransform(dragOriginX + dx, dragOriginY + dy)
+    })
+  }
 }
 
 function handlePointerUp(event: PointerEvent) {
   if (!dragging.value) return
 
+  // Sync reactive refs once at drag end
+  const dx = latestClientX - dragStartX
+  const dy = latestClientY - dragStartY
+  panX.value = dragOriginX + dx
+  panY.value = dragOriginY + dy
+
   dragging.value = false
+  isDragging.value = false
   suppressNextClick = dragged
   if (dragged) {
     window.setTimeout(() => {
       suppressNextClick = false
     }, 120)
   }
+
+  setDragTransition(true)
   ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
 }
 
@@ -240,12 +281,14 @@ const displayTags = () => {
               @pointercancel="handlePointerUp"
             >
               <img
+                ref="previewImgRef"
                 :src="previewImageUrl"
                 :alt="`Wallpaper ${data.id} preview`"
-                class="absolute inset-0 w-full h-full object-contain transition-all duration-300 will-change-transform"
+                class="absolute inset-0 w-full h-full object-contain will-change-transform"
                 :class="[
                   'cursor-inherit',
-                  loading ? 'opacity-100 blur-sm' : 'opacity-0'
+                  loading ? 'opacity-100 blur-sm' : 'opacity-0',
+                  !isDragging && 'duration-300',
                 ]"
                 :style="imageTransformStyle"
                 draggable="false"
@@ -254,12 +297,14 @@ const displayTags = () => {
               />
 
               <img
+                ref="fullImgRef"
                 :src="fullImageUrl"
                 :alt="`Wallpaper ${data.id}`"
-                class="absolute inset-0 w-full h-full object-contain transition-all duration-300 will-change-transform"
+                class="absolute inset-0 w-full h-full object-contain will-change-transform"
                 :class="[
                   'cursor-inherit',
-                  loading ? 'opacity-0' : 'opacity-100'
+                  loading ? 'opacity-0' : 'opacity-100',
+                  !isDragging && 'duration-300',
                 ]"
                 :style="imageTransformStyle"
                 draggable="false"

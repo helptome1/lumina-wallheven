@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useIntersectionObserver } from '@vueuse/core'
 import type { WallpaperData } from '@/types/wallhaven'
 import WallpaperCard from './WallpaperCard.vue'
 import SkeletonGrid from '@/components/common/SkeletonGrid.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
-defineProps<{
+const props = defineProps<{
   wallpapers: WallpaperData[]
   loading: boolean
   hasMore: boolean
@@ -14,6 +16,22 @@ const emit = defineEmits<{
   loadMore: []
   download: [data: WallpaperData]
 }>()
+
+// IntersectionObserver sentinel at the bottom of scrollable content
+const sentinel = ref<HTMLElement | null>(null)
+let isExecuting = false
+
+useIntersectionObserver(
+  sentinel,
+  ([{ isIntersecting }]) => {
+    if (isIntersecting && props.hasMore && !props.loading && !isExecuting) {
+      isExecuting = true
+      emit('loadMore')
+      setTimeout(() => { isExecuting = false }, 300)
+    }
+  },
+  { threshold: 0 },
+)
 </script>
 
 <template>
@@ -48,6 +66,9 @@ const emit = defineEmits<{
         />
       </div>
     </div>
+
+    <!-- Sentinel for infinite scroll — must be inside the scroll container -->
+    <div ref="sentinel" class="h-1 w-full" />
 
     <!-- Empty state -->
     <EmptyState

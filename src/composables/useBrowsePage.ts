@@ -1,7 +1,6 @@
 import { ref, onMounted } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/download'
-import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import type { SearchParams, WallpaperData } from '@/types/wallhaven'
 
 export function useBrowsePage(defaultParams: SearchParams) {
@@ -32,10 +31,6 @@ export function useBrowsePage(defaultParams: SearchParams) {
     loadWallpapers(true)
   }
 
-  const { target } = useInfiniteScroll(onLoadMore, {
-    enabled: hasMore,
-  })
-
   function onDownload(data: WallpaperData) {
     downloadStore.startDownload(data)
   }
@@ -49,7 +44,7 @@ export function useBrowsePage(defaultParams: SearchParams) {
     store,
     currentParams,
     hasMore,
-    target,
+    onLoadMore,
     onSearch,
     onDownload,
   }
