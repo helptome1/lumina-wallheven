@@ -12,6 +12,15 @@ const toast = useToastStore()
 const openDetail = inject<(data: WallpaperData, list?: WallpaperData[]) => void>('openDetail')!
 
 const isFavorited = computed(() => collection.isCollected(props.data.id))
+const isDownloaded = computed(() => downloadStore.isDownloaded(props.data.id))
+
+const purityBorderColor = computed(() => {
+  switch (props.data.purity) {
+    case 'sketchy': return 'rgba(255,200,64,.8)'  // 金色
+    case 'nsfw': return 'rgba(255,64,48,.8)'      // 红色
+    default: return 'transparent'                  // sfw 透明
+  }
+})
 
 const favIconStyle = {
   fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
@@ -37,7 +46,8 @@ const handleDownload = (e: Event) => {
 
 <template>
   <div
-    class="group relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-black/5 shadow-xl transition-all duration-500 hover:scale-[1.02] hover:border-primary/40 cursor-pointer"
+    class="group relative aspect-[4/3] overflow-hidden rounded-[2rem] border shadow-xl transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+    :style="{ borderColor: purityBorderColor }"
     @click="openDetail(data)"
   >
     <!-- Thumbnail -->
@@ -60,7 +70,7 @@ const handleDownload = (e: Event) => {
           <!-- Favorite Button -->
           <button
             @click="handleFavorite"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer"
             :class="isFavorited
               ? 'bg-primary text-on-primary shadow-lg'
               : 'bg-white/20 backdrop-blur-md border border-white/40 hover:bg-primary hover:text-on-primary'"
@@ -73,9 +83,15 @@ const handleDownload = (e: Event) => {
           <!-- Download Button -->
           <button
             @click="handleDownload"
-            class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg hover:brightness-110 transition-all"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            :class="isDownloaded
+              ? 'bg-primary text-on-primary shadow-lg'
+              : 'bg-white/20 backdrop-blur-md border border-white/40 hover:bg-primary hover:text-on-primary'"
           >
-            <span class="material-symbols-outlined text-[20px]">download</span>
+            <span
+              class="material-symbols-outlined text-[20px]"
+              :style="isDownloaded ? favIconStyle : defaultIconStyle"
+            >download</span>
           </button>
         </div>
       </div>

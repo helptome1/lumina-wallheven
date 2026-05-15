@@ -131,15 +131,20 @@
   html, body, #app {
     height: 100%;
     overflow: hidden;
+    background: transparent;
+    border-radius: 24px;
   }
 
   body {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    background-color: rgb(241, 243, 244);
     color: rgb(32, 33, 36);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  #app {
+    contain: paint;
   }
 
   h1, h2, h3, .font-headline {
@@ -167,6 +172,13 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.1);
     border-radius: 10px;
+  }
+
+  .app-window-shell {
+    position: relative;
+    border-radius: 24px;
+    isolation: isolate;
+    contain: paint;
   }
 
   /* ── Animations ── */

@@ -18,10 +18,13 @@
         "minWidth": 1000,
         "minHeight": 700,
         "decorations": false,
+        "transparent": true,
+        "backgroundColor": "#00000000",
         "center": true,
         "resizable": true
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     }

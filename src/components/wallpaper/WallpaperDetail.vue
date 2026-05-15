@@ -91,6 +91,40 @@ function handleDownload() {
   downloadStore.startDownload(props.data)
 }
 
+async function copyText(text: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  document.body.appendChild(textarea)
+  textarea.select()
+  document.execCommand('copy')
+  document.body.removeChild(textarea)
+}
+
+async function handleShare() {
+  const sourceUrl = wallhavenApi.getFullImageUrl(props.data.path)
+
+  try {
+    await copyText(sourceUrl)
+    toast.show('已复制到粘贴板', {
+      icon: 'content_copy',
+      tone: 'success',
+    })
+  } catch {
+    toast.show('复制失败，请稍后再试', {
+      icon: 'error',
+      tone: 'info',
+    })
+  }
+}
+
 function handleImageLoad(event: Event) {
   const image = event.target as HTMLImageElement
   if (image.currentSrc !== fullImageUrl.value) return
@@ -228,12 +262,12 @@ const categoryName = () => {
   return map[props.data.category] || props.data.category || 'General'
 }
 
-// Tags to display
-const displayTags = () => {
-  if (props.data.tags && props.data.tags.length > 0) {
-    return props.data.tags.slice(0, 6).map(t => t.name)
-  }
-  return props.data.colors?.slice(0, 4).map(c => `#${c}`) || []
+function copyColor(color: string) {
+  navigator.clipboard.writeText(color).then(() => {
+    toast.show(`已复制 ${color}`, { icon: 'content_copy', tone: 'success' })
+  }).catch(() => {
+    toast.show('复制失败', { icon: 'error', tone: 'info' })
+  })
 }
 </script>
 
@@ -348,7 +382,7 @@ const displayTags = () => {
               </p>
             </div>
 
-            <!-- Resolution & Category -->
+            <!-- Resolution, Category & File Size -->
             <div class="grid grid-cols-2 gap-4">
               <div class="detail-info-card p-4 rounded-2xl">
                 <span class="block font-label-caps text-modal-secondary mb-1">RESOLUTION</span>
@@ -359,16 +393,27 @@ const displayTags = () => {
                 <span class="font-headline-md text-modal-primary">{{ categoryName() }}</span>
               </div>
             </div>
+            <div class="detail-info-card p-4 rounded-2xl">
+              <span class="block font-label-caps text-modal-secondary mb-1">FILE SIZE</span>
+              <span class="font-headline-md text-modal-primary">{{ (data.file_size / 1048576).toFixed(1) }} MB</span>
+            </div>
 
-            <!-- Tags -->
-            <div v-if="displayTags().length > 0">
-              <span class="block font-label-caps text-modal-secondary mb-4">METADATA TAGS</span>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="tag in displayTags()"
-                  :key="tag"
-                  class="px-4 py-1.5 detail-info-card rounded-full font-body-sm text-modal-primary"
-                >{{ tag }}</span>
+            <!-- Color Palette -->
+            <div v-if="data.colors && data.colors.length > 0">
+              <span class="block font-label-caps text-modal-secondary mb-4">COLOR PALETTE</span>
+              <div class="flex items-center gap-1">
+                <div
+                  v-for="(color, index) in data.colors"
+                  :key="index"
+                  class="flex items-center detail-info-card rounded-full cursor-pointer hover:bg-white/50 transition-all duration-300 group"
+                  @click="copyColor(color)"
+                >
+                  <div
+                    class="w-9 h-9 rounded-full border-2 border-white/50 shadow-md shrink-0 m-1.5"
+                    :style="{ backgroundColor: color }"
+                  />
+                  <span class="font-mono text-body-sm text-modal-primary whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[80px] group-hover:opacity-100 group-hover:pr-3 transition-all duration-300">{{ color }}</span>
+                </div>
               </div>
             </div>
 
@@ -388,7 +433,7 @@ const displayTags = () => {
             <div class="mt-auto flex flex-col gap-3">
               <button
                 @click="handleDownload"
-                class="w-full py-4 bg-[#FF7D4E]/90 text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20 backdrop-blur-xl"
+                class="w-full py-4 bg-[#FF7D4E]/90 text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20 backdrop-blur-xl cursor-pointer"
               >
                 <span class="material-symbols-outlined">download</span>
                 Download Wallpaper
@@ -396,7 +441,7 @@ const displayTags = () => {
               <div class="flex gap-3">
                 <button
                   @click="handleFavorite"
-                  class="flex-1 py-4 detail-info-card rounded-2xl text-modal-primary font-headline-md flex items-center justify-center gap-3 hover:bg-white/40 transition-all"
+                  class="flex-1 py-4 detail-info-card rounded-2xl text-modal-primary font-headline-md flex items-center justify-center gap-3 hover:bg-white/40 transition-all cursor-pointer"
                   :class="{ '!bg-primary/10 !border-primary/20 !text-primary': isFavorited }"
                 >
                   <span
@@ -407,24 +452,14 @@ const displayTags = () => {
                   {{ isFavorited ? 'Favorited' : 'Favorite' }}
                 </button>
                 <button
-                  class="w-16 py-4 detail-info-card rounded-2xl text-modal-primary flex items-center justify-center hover:bg-white/40 transition-all"
+                  @click="handleShare"
+                  class="w-16 py-4 detail-info-card rounded-2xl text-modal-primary flex items-center justify-center hover:bg-white/40 transition-all cursor-pointer"
                 >
                   <span class="material-symbols-outlined">share</span>
                 </button>
               </div>
             </div>
 
-            <!-- Social proof -->
-            <div class="pt-6 border-t border-black/5">
-              <div class="flex items-center justify-between">
-                <div class="flex -space-x-3">
-                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-primary-container shadow-lg" />
-                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-secondary-container shadow-lg" />
-                  <div class="w-10 h-10 rounded-full border-2 border-white/50 bg-orange-400/60 shadow-lg" />
-                </div>
-                <span class="font-body-sm text-modal-secondary">Used by 1.2k creatives</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
 import type { WallpaperData, DownloadItem } from '@/types/wallhaven'
+import { useToastStore } from '@/stores/toast'
 
 const DOWNLOADS_KEY = 'wallhaven-downloads'
 const DOWNLOAD_DIR_KEY = 'wallhaven-download-dir'
@@ -115,17 +116,38 @@ export const useDownloadStore = defineStore('download', () => {
     await invoke('reveal_download_file', { path })
   }
 
+  function isDownloading(id: string): boolean {
+    return activeIds.value.has(id)
+  }
+
+  function isDownloaded(id: string): boolean {
+    return items.value.some(i => i.id === id && i.state === 'done')
+  }
+
   async function startDownload(data: WallpaperData) {
+    const toast = useToastStore()
+
+    // 检查是否正在下载中
+    if (isDownloading(data.id)) {
+      toast.show('正在下载中，请稍后查看', {
+        icon: 'download',
+        tone: 'info',
+      })
+      return
+    }
+
+    // 检查是否已下载完成
+    if (isDownloaded(data.id)) {
+      toast.show('当前图片已经下载，无需重复下载', {
+        icon: 'check_circle',
+        tone: 'info',
+      })
+      return
+    }
+
     const ext = data.path.substring(data.path.lastIndexOf('.')) || '.jpg'
     const file_name = `wallhaven-${data.id}${ext}`
     removedIds.delete(data.id)
-
-    await invoke('download_image', {
-      url: data.path,
-      id: data.id,
-      fileName: file_name,
-      resolution: data.resolution,
-    })
 
     items.value.unshift({
       id: data.id,
@@ -141,6 +163,28 @@ export const useDownloadStore = defineStore('download', () => {
 
     activeIds.value.add(data.id)
     persist()
+
+    toast.show('已添加至下载列表', {
+      icon: 'download',
+      tone: 'success',
+    })
+
+    try {
+      await invoke('download_image', {
+        url: data.path,
+        id: data.id,
+        fileName: file_name,
+        resolution: data.resolution,
+      })
+    } catch {
+      activeIds.value.delete(data.id)
+      items.value = items.value.filter(item => item.id !== data.id || item.state !== 'waiting')
+      persist()
+      toast.show('添加下载失败，请稍后再试', {
+        icon: 'error',
+        tone: 'info',
+      })
+    }
   }
 
   async function cancelDownload(id: string) {
@@ -178,6 +222,8 @@ export const useDownloadStore = defineStore('download', () => {
     chooseDownloadDir,
     openDownloadDir,
     revealDownloadFile,
+    isDownloading,
+    isDownloaded,
     startDownload,
     cancelDownload,
     deleteDownload,
