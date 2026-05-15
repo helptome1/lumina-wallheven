@@ -41,9 +41,8 @@ export function useBrowsePage(defaultParams: SearchParams) {
   }
 
   onMounted(() => {
-    if (store.wallpapers.length === 0) {
-      loadWallpapers()
-    }
+    store.reset()
+    loadWallpapers()
   })
 
   return {

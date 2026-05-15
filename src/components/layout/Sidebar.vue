@@ -5,6 +5,30 @@ import { computed } from 'vue'
 const route = useRoute()
 const router = useRouter()
 
+const navGroups = [
+  {
+    label: '在线壁纸',
+    items: [
+      { id: 'hot', label: '热门推荐', path: '/hot', icon: 'local_fire_department' },
+      { id: 'acg', label: '动漫精选', path: '/acg', icon: 'auto_awesome' },
+      { id: 'people', label: '人物精选', path: '/people', icon: 'groups' },
+    ],
+  },
+  {
+    label: '我的壁纸',
+    items: [
+      { id: 'collection', label: '我的收藏', path: '/collection', icon: 'favorite' },
+      { id: 'download', label: '下载中心', path: '/download', icon: 'download' },
+    ],
+  },
+  {
+    label: '其他',
+    items: [
+      { id: 'about', label: '关于', path: '/about', icon: 'info' },
+    ],
+  },
+]
+
 const activePath = computed(() => route.path)
 
 function isActive(path: string): boolean {
@@ -22,86 +46,25 @@ function navigate(path: string) {
       <h1 class="text-headline-xl text-primary leading-tight">Lumina</h1>
       <p class="text-body-sm text-on-surface-variant font-medium">4K Creative Gallery</p>
     </div>
-    <nav class="flex-1 space-y-2">
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/hot')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/hot')"
-      >
-        <span class="material-symbols-outlined" data-icon="language">language</span>
-        <span class="text-body-md">Online Wallpapers</span>
-      </a>
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/trending')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/trending')"
-      >
-        <span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
-        <span class="text-body-md">Trending</span>
-      </a>
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/anime')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/anime')"
-      >
-        <span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
-        <span class="text-body-md">Anime</span>
-      </a>
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/people')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/people')"
-      >
-        <span class="material-symbols-outlined" data-icon="groups">groups</span>
-        <span class="text-body-md">People</span>
-      </a>
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/collection')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/collection')"
-      >
-        <span class="material-symbols-outlined" data-icon="favorite">favorite</span>
-        <span class="text-body-md">Favorites</span>
-      </a>
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
-        :class="isActive('/downloads')
-          ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/downloads')"
-      >
-        <span class="material-symbols-outlined" data-icon="download">download</span>
-        <span class="text-body-md">Downloads</span>
-      </a>
+    <nav class="flex-1 space-y-8">
+      <section v-for="group in navGroups" :key="group.label" class="space-y-2">
+        <div class="px-4 text-label-caps text-on-surface-variant/70">{{ group.label }}</div>
+        <a
+          v-for="item in group.items"
+          :key="item.id"
+          class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300"
+          :class="isActive(item.path)
+            ? 'bg-primary text-on-primary font-semibold border border-primary/20 shadow-lg shadow-primary/20'
+            : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
+          href="#"
+          @click.prevent="navigate(item.path)"
+        >
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span class="text-body-md">{{ item.label }}</span>
+        </a>
+      </section>
     </nav>
     <div class="mt-auto pt-6 border-t border-black/5">
-      <a
-        class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all mb-4"
-        :class="isActive('/about')
-          ? 'bg-primary text-on-primary font-bold border border-primary/20 shadow-lg shadow-primary/20'
-          : 'text-on-surface-variant hover:text-on-surface hover:bg-black/5'"
-        href="#"
-        @click.prevent="navigate('/about')"
-      >
-        <span class="material-symbols-outlined" data-icon="info">info</span>
-        <span class="text-body-md">About</span>
-      </a>
       <div class="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-2xl border border-black/5">
         <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
           <img

@@ -2,14 +2,16 @@
 import type { WallpaperData } from '@/types/wallhaven'
 import { useCollectionStore } from '@/stores/collection'
 import { useDownloadStore } from '@/stores/download'
-import { inject } from 'vue'
+import { useToastStore } from '@/stores/toast'
+import { computed, inject } from 'vue'
 
 const props = defineProps<{ data: WallpaperData }>()
 const collection = useCollectionStore()
 const downloadStore = useDownloadStore()
+const toast = useToastStore()
 const openDetail = inject<(data: WallpaperData, list?: WallpaperData[]) => void>('openDetail')!
 
-const isFavorited = collection.isCollected(props.data.id)
+const isFavorited = computed(() => collection.isCollected(props.data.id))
 
 const favIconStyle = {
   fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
@@ -20,7 +22,11 @@ const defaultIconStyle = {
 
 const handleFavorite = (e: Event) => {
   e.stopPropagation()
+  const willCollect = !isFavorited.value
   collection.toggle(props.data)
+  toast.show(willCollect ? '已收藏到 Favorites' : '已取消收藏', {
+    icon: willCollect ? 'favorite' : 'heart_minus',
+  })
 }
 
 const handleDownload = (e: Event) => {
@@ -46,7 +52,7 @@ const handleDownload = (e: Event) => {
 
     <!-- Hover Overlay -->
     <div
-      class="absolute inset-0 wallpaper-card-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 backdrop-blur-[40px]"
+      class="absolute inset-0 wallpaper-card-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 backdrop-blur-[10px]"
     >
       <div class="flex justify-between items-center text-on-surface">
         <span class="text-label-caps text-on-surface-variant font-bold">{{ data.resolution }}</span>

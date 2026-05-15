@@ -1,6 +1,7 @@
 use crate::download::{DownloadProgress, DownloadRequest, DownloadState};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_dialog::DialogExt;
 use tokio::sync::Mutex;
 
 #[tauri::command]
@@ -28,6 +29,7 @@ pub async fn download_image(
         download_dir,
     };
 
+    guard.cancelled.remove(&id);
     guard.active_downloads.insert(id.clone(), None);
     drop(guard);
 
@@ -87,7 +89,8 @@ pub async fn cancel_download(
     id: String,
 ) -> Result<(), String> {
     let mut guard = state.lock().await;
-    guard.cancelled.insert(id);
+    guard.cancelled.insert(id.clone());
+    guard.active_downloads.remove(&id);
     Ok(())
 }
 
@@ -110,8 +113,98 @@ pub async fn clear_download(
 }
 
 #[tauri::command]
+pub async fn delete_download_file(
+    state: State<'_, Arc<Mutex<DownloadState>>>,
+    id: String,
+    file_path: Option<String>,
+) -> Result<(), String> {
+    let file_path = if file_path.is_some() {
+        file_path
+    } else {
+        let guard = state.lock().await;
+        guard
+            .completed_downloads
+            .iter()
+            .find(|d| d.id == id)
+            .and_then(|d| d.file_path.clone())
+    };
+
+    if let Some(path) = file_path {
+        let file = std::path::PathBuf::from(&path);
+        if file.exists() {
+            tokio::fs::remove_file(&file)
+                .await
+                .map_err(|e| format!("Failed to delete file: {}", e))?;
+        }
+    }
+
+    let mut guard = state.lock().await;
+    guard.completed_downloads.retain(|d| d.id != id);
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn open_download_folder(path: String) -> Result<(), String> {
     opener::open(&path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn reveal_download_file(path: String) -> Result<(), String> {
+    opener::reveal(std::path::PathBuf::from(path)).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_download_dir(
+    state: State<'_, Arc<Mutex<DownloadState>>>,
+) -> Result<String, String> {
+    let guard = state.lock().await;
+    Ok(guard.get_download_dir().to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn set_download_dir(
+    state: State<'_, Arc<Mutex<DownloadState>>>,
+    path: String,
+) -> Result<String, String> {
+    let dir = std::path::PathBuf::from(path);
+    tokio::fs::create_dir_all(&dir)
+        .await
+        .map_err(|e| format!("Failed to create download directory: {}", e))?;
+
+    let mut guard = state.lock().await;
+    guard.set_download_dir(dir.clone());
+    Ok(dir.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn choose_download_dir(
+    app: AppHandle,
+    state: State<'_, Arc<Mutex<DownloadState>>>,
+) -> Result<Option<String>, String> {
+    let current_dir = {
+        let guard = state.lock().await;
+        guard.get_download_dir()
+    };
+
+    let selected = app
+        .dialog()
+        .file()
+        .set_title("Select Download Folder")
+        .set_directory(current_dir)
+        .blocking_pick_folder()
+        .and_then(|file_path| file_path.into_path().ok());
+
+    let Some(path) = selected else {
+        return Ok(None);
+    };
+
+    tokio::fs::create_dir_all(&path)
+        .await
+        .map_err(|e| format!("Failed to create download directory: {}", e))?;
+
+    let mut guard = state.lock().await;
+    guard.set_download_dir(path.clone());
+    Ok(Some(path.to_string_lossy().to_string()))
 }
 
 #[tauri::command]

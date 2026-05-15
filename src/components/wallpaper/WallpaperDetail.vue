@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted, onMounted } from 'vue'
+import { computed, ref, watch, onUnmounted, onMounted } from 'vue'
 import type { WallpaperData } from '@/types/wallhaven'
 import { wallhavenApi } from '@/api/wallhaven'
 import { useCollectionStore } from '@/stores/collection'
 import { useDownloadStore } from '@/stores/download'
+import { useToastStore } from '@/stores/toast'
 
 const props = defineProps<{
   data: WallpaperData
@@ -19,14 +20,39 @@ const emit = defineEmits<{
 
 const collection = useCollectionStore()
 const downloadStore = useDownloadStore()
+const toast = useToastStore()
 
 const fullImageUrl = ref('')
+const previewImageUrl = ref('')
 const loading = ref(true)
 const zoomed = ref(false)
+const dragging = ref(false)
+const panX = ref(0)
+const panY = ref(0)
+
+let dragStartX = 0
+let dragStartY = 0
+let dragOriginX = 0
+let dragOriginY = 0
+let dragged = false
+let suppressNextClick = false
+
+const imageViewportClass = computed(() => {
+  if (!zoomed.value) return 'cursor-zoom-in'
+  return dragging.value ? 'cursor-grabbing' : 'cursor-grab'
+})
+
+const imageTransformStyle = computed(() => ({
+  transform: zoomed.value
+    ? `translate3d(${panX.value}px, ${panY.value}px, 0) scale(1.7)`
+    : 'translate3d(0, 0, 0) scale(1)',
+}))
 
 async function loadImage(data: WallpaperData) {
   loading.value = true
   zoomed.value = false
+  resetPan()
+  previewImageUrl.value = data.thumbs.large || data.thumbs.original || data.thumbs.small
   fullImageUrl.value = wallhavenApi.getFullImageUrl(data.path)
 }
 
@@ -34,7 +60,7 @@ watch(() => props.data, (data) => {
   loadImage(data)
 }, { immediate: true })
 
-const isFavorited = collection.isCollected(props.data.id)
+const isFavorited = computed(() => collection.isCollected(props.data.id))
 
 const favIconStyle = {
   fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
@@ -44,14 +70,21 @@ const defaultIconStyle = {
 }
 
 function handleFavorite() {
+  const willCollect = !isFavorited.value
   collection.toggle(props.data)
+  toast.show(willCollect ? '已收藏到 Favorites' : '已取消收藏', {
+    icon: willCollect ? 'favorite' : 'heart_minus',
+  })
 }
 
 function handleDownload() {
   downloadStore.startDownload(props.data)
 }
 
-function handleImageLoad() {
+function handleImageLoad(event: Event) {
+  const image = event.target as HTMLImageElement
+  if (image.currentSrc !== fullImageUrl.value) return
+
   loading.value = false
 }
 
@@ -67,6 +100,62 @@ function onKeydown(e: KeyboardEvent) {
 
 function toggleZoom() {
   zoomed.value = !zoomed.value
+  resetPan()
+}
+
+function resetPan() {
+  dragging.value = false
+  panX.value = 0
+  panY.value = 0
+  dragged = false
+  suppressNextClick = false
+}
+
+function handleImageClick() {
+  if (suppressNextClick) {
+    suppressNextClick = false
+    return
+  }
+
+  toggleZoom()
+}
+
+function handlePointerDown(event: PointerEvent) {
+  if (!zoomed.value) return
+  if ((event.target as HTMLElement).closest('button')) return
+
+  dragging.value = true
+  dragged = false
+  dragStartX = event.clientX
+  dragStartY = event.clientY
+  dragOriginX = panX.value
+  dragOriginY = panY.value
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  event.preventDefault()
+}
+
+function handlePointerMove(event: PointerEvent) {
+  if (!dragging.value) return
+
+  const deltaX = event.clientX - dragStartX
+  const deltaY = event.clientY - dragStartY
+  if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) dragged = true
+
+  panX.value = dragOriginX + deltaX
+  panY.value = dragOriginY + deltaY
+}
+
+function handlePointerUp(event: PointerEvent) {
+  if (!dragging.value) return
+
+  dragging.value = false
+  suppressNextClick = dragged
+  if (dragged) {
+    window.setTimeout(() => {
+      suppressNextClick = false
+    }, 120)
+  }
+  ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
 }
 
 let scrollDisabled = false
@@ -111,11 +200,11 @@ const displayTags = () => {
   <Teleport to="body">
     <transition name="detail-fade">
       <div
-        class="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12 modal-overlay"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 modal-overlay"
         @click.self="emit('close')"
       >
         <div
-          class="max-w-6xl w-full max-h-[92%] light-glass-modal soft-glow overflow-hidden flex flex-col md:flex-row relative rounded-2xl shadow-xl"
+          class="max-w-7xl w-full h-[92vh] light-glass-modal soft-glow overflow-hidden flex flex-col md:flex-row relative rounded-2xl shadow-xl"
         >
           <!-- macOS-style window dots -->
           <div class="absolute top-6 left-6 flex gap-2 z-50">
@@ -135,40 +224,64 @@ const displayTags = () => {
           <button
             v-if="hasNext"
             @click.stop="emit('next')"
-            class="absolute right-[420px] top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full bg-black/10 backdrop-blur-md border border-black/5 flex items-center justify-center hover:bg-black/20 transition-all text-on-surface-variant"
+            class="absolute right-4 md:right-[380px] top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full bg-black/10 backdrop-blur-md border border-black/5 flex items-center justify-center hover:bg-black/20 transition-all text-on-surface-variant"
           >
             <span class="material-symbols-outlined">chevron_right</span>
           </button>
 
           <!-- Left: Image Preview -->
-          <div class="flex-1 bg-black/5 flex items-center justify-center p-4 relative">
-            <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-black/5 group">
-              <!-- Loading -->
-              <div
-                v-if="loading"
-                class="absolute inset-0 flex items-center justify-center bg-black/5"
-              >
-                <div class="flex gap-2">
-                  <span v-for="i in 3" :key="i" class="w-2 h-2 rounded-full bg-primary/40 animate-bounce" :style="{ animationDelay: `${i * 0.15}s` }" />
-                </div>
-              </div>
+          <div class="flex-1 min-h-0 bg-black/5 flex items-center justify-center p-3 md:p-5 relative">
+            <div
+              class="relative w-full h-full overflow-hidden rounded-2xl shadow-2xl border border-white/30 group image-viewport touch-none select-none"
+              :class="imageViewportClass"
+              @pointerdown="handlePointerDown"
+              @pointermove="handlePointerMove"
+              @pointerup="handlePointerUp"
+              @pointercancel="handlePointerUp"
+            >
+              <img
+                :src="previewImageUrl"
+                :alt="`Wallpaper ${data.id} preview`"
+                class="absolute inset-0 w-full h-full object-contain transition-all duration-300 will-change-transform"
+                :class="[
+                  'cursor-inherit',
+                  loading ? 'opacity-100 blur-sm' : 'opacity-0'
+                ]"
+                :style="imageTransformStyle"
+                draggable="false"
+                referrerpolicy="no-referrer"
+                @click="handleImageClick"
+              />
 
               <img
-                v-show="!loading"
                 :src="fullImageUrl"
                 :alt="`Wallpaper ${data.id}`"
-                class="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
-                :class="{ 'scale-150': zoomed }"
+                class="absolute inset-0 w-full h-full object-contain transition-all duration-300 will-change-transform"
+                :class="[
+                  'cursor-inherit',
+                  loading ? 'opacity-0' : 'opacity-100'
+                ]"
+                :style="imageTransformStyle"
                 draggable="false"
                 referrerpolicy="no-referrer"
                 @load="handleImageLoad"
-                @click="toggleZoom"
+                @click="handleImageClick"
               />
+
+              <!-- Loading -->
+              <div
+                v-if="loading"
+                class="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none"
+              >
+                <div class="flex gap-2 rounded-full bg-black/20 px-4 py-3 backdrop-blur-md">
+                  <span v-for="i in 3" :key="i" class="w-2 h-2 rounded-full bg-white/80 animate-bounce" :style="{ animationDelay: `${i * 0.15}s` }" />
+                </div>
+              </div>
 
               <!-- Image controls -->
               <div class="absolute bottom-6 right-6 flex gap-3">
                 <button
-                  @click="toggleZoom"
+                  @click.stop="toggleZoom"
                   class="bg-black/20 backdrop-blur-xl hover:bg-black/40 p-2.5 rounded-xl text-white transition-all border border-white/20"
                 >
                   <span class="material-symbols-outlined">{{ zoomed ? 'zoom_out' : 'zoom_in' }}</span>
@@ -178,7 +291,7 @@ const displayTags = () => {
           </div>
 
           <!-- Right: Detail Panel -->
-          <div class="w-full md:w-[400px] p-8 flex flex-col gap-8 bg-white/10 backdrop-blur-2xl border-l border-black/5 overflow-y-auto">
+          <div class="w-full md:w-[360px] p-5 md:p-6 flex flex-col gap-5 detail-panel-glass overflow-y-auto">
             <!-- Title & Author -->
             <div>
               <h2 class="font-headline-lg text-headline-lg text-modal-primary mb-2">
@@ -192,11 +305,11 @@ const displayTags = () => {
 
             <!-- Resolution & Category -->
             <div class="grid grid-cols-2 gap-4">
-              <div class="bg-black/5 p-4 rounded-2xl border border-black/5">
+              <div class="detail-info-card p-4 rounded-2xl">
                 <span class="block font-label-caps text-modal-secondary mb-1">RESOLUTION</span>
                 <span class="font-headline-md text-modal-primary">{{ data.resolution }}</span>
               </div>
-              <div class="bg-black/5 p-4 rounded-2xl border border-black/5">
+              <div class="detail-info-card p-4 rounded-2xl">
                 <span class="block font-label-caps text-modal-secondary mb-1">CATEGORY</span>
                 <span class="font-headline-md text-modal-primary">{{ categoryName() }}</span>
               </div>
@@ -209,7 +322,7 @@ const displayTags = () => {
                 <span
                   v-for="tag in displayTags()"
                   :key="tag"
-                  class="px-4 py-1.5 bg-black/5 border border-black/5 rounded-full font-body-sm text-modal-primary"
+                  class="px-4 py-1.5 detail-info-card rounded-full font-body-sm text-modal-primary"
                 >{{ tag }}</span>
               </div>
             </div>
@@ -230,7 +343,7 @@ const displayTags = () => {
             <div class="mt-auto flex flex-col gap-3">
               <button
                 @click="handleDownload"
-                class="w-full py-4 bg-[#FF7D4E] text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20"
+                class="w-full py-4 bg-[#FF7D4E]/90 text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20 backdrop-blur-xl"
               >
                 <span class="material-symbols-outlined">download</span>
                 Download Wallpaper
@@ -238,7 +351,7 @@ const displayTags = () => {
               <div class="flex gap-3">
                 <button
                   @click="handleFavorite"
-                  class="flex-1 py-4 bg-black/5 border border-black/5 rounded-2xl text-modal-primary font-headline-md flex items-center justify-center gap-3 hover:bg-black/10 transition-all"
+                  class="flex-1 py-4 detail-info-card rounded-2xl text-modal-primary font-headline-md flex items-center justify-center gap-3 hover:bg-white/40 transition-all"
                   :class="{ '!bg-primary/10 !border-primary/20 !text-primary': isFavorited }"
                 >
                   <span
@@ -249,7 +362,7 @@ const displayTags = () => {
                   {{ isFavorited ? 'Favorited' : 'Favorite' }}
                 </button>
                 <button
-                  class="w-16 py-4 bg-black/5 border border-black/5 rounded-2xl text-modal-primary flex items-center justify-center hover:bg-black/10 transition-all"
+                  class="w-16 py-4 detail-info-card rounded-2xl text-modal-primary flex items-center justify-center hover:bg-white/40 transition-all"
                 >
                   <span class="material-symbols-outlined">share</span>
                 </button>
@@ -286,5 +399,34 @@ const displayTags = () => {
 }
 .detail-fade-leave-to {
   opacity: 0;
+}
+
+.image-viewport {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)),
+    rgba(0, 0, 0, 0.08);
+}
+
+.image-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.image-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+
+.detail-panel-glass {
+  background: rgba(255, 255, 255, 0.26);
+  border-left: 1px solid rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(28px) saturate(1.15);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.18);
+}
+
+.detail-info-card {
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(18px);
 }
 </style>

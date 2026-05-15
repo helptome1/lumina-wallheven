@@ -4,6 +4,7 @@ import { RouterView } from 'vue-router'
 import Sidebar from './Sidebar.vue'
 import GlobalHeader from '@/components/wallpaper/GlobalHeader.vue'
 import WallpaperDetail from '@/components/wallpaper/WallpaperDetail.vue'
+import ToastViewport from '@/components/common/ToastViewport.vue'
 import type { WallpaperData } from '@/types/wallhaven'
 
 const detailTarget = ref<WallpaperData | null>(null)
@@ -87,5 +88,7 @@ provide('closeDetail', closeDetail)
         @next="nextDetail"
       />
     </template>
+
+    <ToastViewport />
   </div>
 </template>
