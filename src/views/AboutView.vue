@@ -41,6 +41,10 @@
             <span class="text-on-surface-variant">Data Source</span>
             <span class="text-primary font-medium">wallhaven.cc</span>
           </div>
+          <div class="flex justify-between py-1.5 border-t border-black/5">
+            <span class="text-on-surface-variant">Developer（微信公众号）</span>
+            <span class="text-on-surface font-medium">HelpToMe</span>
+          </div>
         </div>
 
         <p class="text-[11px] text-on-surface-variant/50 mt-6">

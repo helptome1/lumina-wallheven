@@ -16,7 +16,7 @@ const { store, hasMore, onLoadMore, onSearch, onDownload } = useBrowsePage({
 
 const emptyDescription = computed(() => {
   if (filterStore.purityKeys.nsfw && !localStorage.getItem('wallhaven-api-key')) {
-    return '请在设置中配置 ApiKey'
+    return '使用NSFW类别，需要在设置中配置 ApiKey'
   }
   return undefined
 })
