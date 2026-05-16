@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="panda" x1="272" y1="148" x2="762" y2="784" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66e9e3"/>
+      <stop offset="0.48" stop-color="#8fc6ff"/>
+      <stop offset="1" stop-color="#d986ff"/>
+    </linearGradient>
+    <linearGradient id="pandaSoft" x1="322" y1="214" x2="706" y2="728" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9ffff" stop-opacity="0.86"/>
+      <stop offset="0.55" stop-color="#edf3ff" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#f3ddff" stop-opacity="0.78"/>
+    </linearGradient>
+    <linearGradient id="albumCover" x1="364" y1="706" x2="688" y2="874" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.46" stop-color="#e8fbff"/>
+      <stop offset="1" stop-color="#f4e7ff"/>
+    </linearGradient>
+    <linearGradient id="albumAccent" x1="384" y1="720" x2="668" y2="844" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66e9e3"/>
+      <stop offset="0.62" stop-color="#8fc6ff"/>
+      <stop offset="1" stop-color="#c48cff"/>
+    </linearGradient>
+    <filter id="shadow" x="140" y="78" width="744" height="846" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#5f6be8" flood-opacity="0.18"/>
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#203348" flood-opacity="0.08"/>
+    </filter>
+    <filter id="albumShadow" x="300" y="662" width="424" height="250" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#6063ee" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path d="M353 246c-48-56-42-126 10-162 54-38 132-8 164 66 44-12 90-12 134 0 32-74 110-104 164-66 52 36 58 106 10 162 48 58 72 130 66 200-10 124-106 198-262 210-40 4-214 4-254 0-156-12-252-86-262-210-6-70 18-142 66-200Z" fill="url(#panda)"/>
+    <path d="M250 438c0-120 96-218 262-218s262 98 262 218c0 126-96 180-262 180s-262-54-262-180Z" fill="rgba(255,255,255,0.18)"/>
+    <path d="M328 456c22-86 88-140 184-140 94 0 160 54 184 140-34 68-94 104-184 104s-150-36-184-104Z" fill="url(#pandaSoft)"/>
+    <ellipse cx="412" cy="438" rx="58" ry="86" transform="rotate(32 412 438)" fill="#41647a" opacity="0.72"/>
+    <ellipse cx="612" cy="438" rx="58" ry="86" transform="rotate(-32 612 438)" fill="#41647a" opacity="0.72"/>
+    <ellipse cx="412" cy="424" rx="22" ry="30" transform="rotate(32 412 424)" fill="#ffffff" opacity="0.44"/>
+    <ellipse cx="612" cy="424" rx="22" ry="30" transform="rotate(-32 612 424)" fill="#ffffff" opacity="0.44"/>
+    <path d="M482 506c0-14 16-22 30-22s30 8 30 22c0 10-20 28-30 28s-30-18-30-28Z" fill="#41647a" opacity="0.82"/>
+    <path d="M354 250c24-44 66-62 108-44-22 22-44 50-54 86-22-2-40-18-54-42Z" fill="#e4ffff" opacity="0.72"/>
+    <path d="M670 292c-10-36-32-64-54-86 42-18 84 0 108 44-14 24-32 40-54 42Z" fill="#e4ffff" opacity="0.72"/>
+  </g>
+
+  <g filter="url(#albumShadow)">
+    <rect x="356" y="696" width="312" height="160" rx="38" fill="url(#albumAccent)" opacity="0.96"/>
+    <rect x="380" y="718" width="264" height="116" rx="26" fill="url(#albumCover)"/>
+    <path d="M384 808 446 756c16-14 34-12 48 4l32 36 20-22c14-16 34-16 50 0l62 58H384Z" fill="url(#albumAccent)" opacity="0.78"/>
+    <circle cx="576" cy="754" r="20" fill="#ffb783" opacity="0.92"/>
+    <path d="M512 716v120" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.70"/>
+    <path d="M418 734h68" stroke="#41647a" stroke-width="10" stroke-linecap="round" opacity="0.16"/>
+    <path d="M536 812h74" stroke="#41647a" stroke-width="10" stroke-linecap="round" opacity="0.12"/>
+  </g>
+</svg>
