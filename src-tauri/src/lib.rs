@@ -23,29 +23,6 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
-
-                // Register global shortcuts for DevTools
-                // Cmd/Ctrl+J → open DevTools  |  Cmd/Ctrl+K → close DevTools
-                use tauri_plugin_global_shortcut::GlobalShortcutExt;
-                let gs = app.handle().global_shortcut();
-
-                let handle_open = app.handle().clone();
-                gs.on_shortcut("CmdOrCtrl+KeyJ", move |_app, _shortcut, event| {
-                    if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                        if let Some(window) = handle_open.get_webview_window("main") {
-                            let _ = window.open_devtools();
-                        }
-                    }
-                })?;
-
-                let handle_close = app.handle().clone();
-                gs.on_shortcut("CmdOrCtrl+KeyK", move |_app, _shortcut, event| {
-                    if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                        if let Some(window) = handle_close.get_webview_window("main") {
-                            let _ = window.close_devtools();
-                        }
-                    }
-                })?;
             }
             Ok(())
         })

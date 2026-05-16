@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Wallhaven",
+  "productName": "Lumina",
   "version": "1.0.0",
-  "identifier": "com.wallhaven.desktop",
+  "identifier": "com.lumina.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Wallhaven",
+        "title": "Lumina",
         "width": 1400,
         "height": 900,
         "minWidth": 1000,
@@ -36,7 +36,7 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
+      "icons/Lumina.icns",
       "icons/icon.ico"
     ]
   }

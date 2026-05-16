@@ -2,7 +2,9 @@
 import { reactive, ref } from 'vue'
 import type { SearchParams } from '@/types/wallhaven'
 
-const emit = defineEmits<{ search: [params: SearchParams] }>()
+const emit = defineEmits<{ search: [params: SearchParams]; refresh: [] }>()
+
+const refreshing = ref(false)
 
 const params = reactive<SearchParams>({
   sorting: 'toplist',
@@ -112,6 +114,16 @@ function toggleRes() {
 function onSearchKeyup(e: KeyboardEvent) {
   if (e.key === 'Enter') doSearch()
 }
+
+function handleRefresh() {
+  if (refreshing.value) return
+  refreshing.value = true
+  emit('refresh')
+  doSearch()
+  setTimeout(() => {
+    refreshing.value = false
+  }, 600)
+}
 </script>
 
 <template>
@@ -200,14 +212,13 @@ function onSearchKeyup(e: KeyboardEvent) {
           @keyup="onSearchKeyup"
         />
       </div>
-      <div class="flex items-center gap-3 text-on-surface-variant">
-        <button class="hover:text-primary transition-colors cursor-pointer">
-          <span class="material-symbols-outlined text-[20px]">settings</span>
-        </button>
-        <button class="hover:text-primary transition-colors cursor-pointer">
-          <span class="material-symbols-outlined text-[20px]">account_circle</span>
-        </button>
-      </div>
+      <button
+        class="hover:text-primary transition-colors cursor-pointer"
+        :class="{ 'animate-spin': refreshing }"
+        @click="handleRefresh"
+      >
+        <span class="material-symbols-outlined text-[20px]">refresh</span>
+      </button>
     </div>
   </header>
 </template>
