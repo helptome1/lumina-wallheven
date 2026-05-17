@@ -25,6 +25,7 @@ function saveApiKey() {
     localStorage.removeItem(API_KEY_STORAGE)
     savedKey.value = ''
   }
+  window.dispatchEvent(new CustomEvent('api-key-changed'))
   saved.value = true
   setTimeout(() => { saved.value = false }, 2000)
 }

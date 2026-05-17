@@ -22,7 +22,7 @@ const emptyDescription = computed(() => {
 })
 
 watch(
-  () => [filterStore.params.purity, filterStore.params.sorting, filterStore.params.atleast, filterStore.params.q],
+  () => [filterStore.params.purity, filterStore.params.sorting, filterStore.params.atleast, filterStore.params.q, filterStore.refreshCounter],
   () => {
     onSearch(filterStore.getSnapshot())
   },

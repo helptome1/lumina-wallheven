@@ -6,6 +6,7 @@ const filterStore = useFilterStore()
 
 const sortOpen = ref(false)
 const resOpen = ref(false)
+const refreshing = ref(false)
 
 const purityOptions = [
   { label: 'SFW', key: 'sfw' as const },
@@ -92,6 +93,15 @@ function onSearchKeyup(e: KeyboardEvent) {
   if (e.key === 'Enter' && searchInput.value.trim()) {
     filterStore.setQuery(searchInput.value.trim())
   }
+}
+
+function handleRefresh() {
+  if (refreshing.value) return
+  refreshing.value = true
+  filterStore.triggerRefresh()
+  setTimeout(() => {
+    refreshing.value = false
+  }, 600)
 }
 
 // Close dropdowns on click outside
@@ -190,14 +200,13 @@ if (typeof document !== 'undefined') {
           @keyup="onSearchKeyup"
         />
       </div>
-      <div class="flex items-center gap-5 text-on-surface-variant">
-        <button class="hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">settings</span>
-        </button>
-        <button class="hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">account_circle</span>
-        </button>
-      </div>
+      <button
+        class="hover:text-primary transition-colors cursor-pointer"
+        :class="{ 'animate-spin': refreshing }"
+        @click="handleRefresh"
+      >
+        <span class="material-symbols-outlined">refresh</span>
+      </button>
     </div>
   </header>
 </template>

@@ -25,7 +25,7 @@ const toast = useToastStore()
 const fullImageUrl = ref('')
 const previewImageUrl = ref('')
 const loading = ref(true)
-const zoomed = ref(false)
+const zoomScale = ref(1)
 const dragging = ref(false)
 const isDragging = ref(false)
 const panX = ref(0)
@@ -47,20 +47,22 @@ let latestClientX = 0
 let latestClientY = 0
 let rafPending = false
 
+const isZoomed = computed(() => zoomScale.value > 1)
+
 const imageViewportClass = computed(() => {
-  if (!zoomed.value) return 'cursor-zoom-in'
+  if (!isZoomed.value) return 'cursor-zoom-in'
   return dragging.value ? 'cursor-grabbing' : 'cursor-grab'
 })
 
 const imageTransformStyle = computed(() => ({
-  transform: zoomed.value
-    ? `translate3d(${panX.value}px, ${panY.value}px, 0) scale(1.7)`
+  transform: isZoomed.value
+    ? `translate3d(${panX.value}px, ${panY.value}px, 0) scale(${zoomScale.value})`
     : 'translate3d(0, 0, 0) scale(1)',
 }))
 
 async function loadImage(data: WallpaperData) {
   loading.value = true
-  zoomed.value = false
+  zoomScale.value = 1
   resetPan()
   previewImageUrl.value = data.thumbs.large || data.thumbs.original || data.thumbs.small
   fullImageUrl.value = wallhavenApi.getFullImageUrl(data.path)
@@ -143,7 +145,11 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 function toggleZoom() {
-  zoomed.value = !zoomed.value
+  if (isZoomed.value) {
+    zoomScale.value = 1
+  } else {
+    zoomScale.value = 2
+  }
   resetPan()
 }
 
@@ -164,8 +170,27 @@ function handleImageClick() {
   toggleZoom()
 }
 
+function handleWheel(event: WheelEvent) {
+  event.preventDefault()
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const cx = event.clientX - rect.left - rect.width / 2
+  const cy = event.clientY - rect.top - rect.height / 2
+
+  const delta = -event.deltaY * 0.003
+  const oldScale = zoomScale.value
+  const newScale = Math.max(0.1, oldScale + delta * oldScale)
+
+  // Zoom toward cursor: adjust pan so the point under cursor stays fixed
+  const scaleRatio = newScale / oldScale
+  panX.value = panX.value * scaleRatio + cx * (1 - scaleRatio)
+  panY.value = panY.value * scaleRatio + cy * (1 - scaleRatio)
+  zoomScale.value = newScale
+}
+
 function applyDragTransform(x: number, y: number) {
-  const val = `translate3d(${x}px, ${y}px, 0) scale(1.7)`
+  const s = zoomScale.value
+  const val = `translate3d(${x}px, ${y}px, 0) scale(${s})`
   if (previewImgRef.value) previewImgRef.value.style.transform = val
   if (fullImgRef.value) fullImgRef.value.style.transform = val
 }
@@ -177,7 +202,7 @@ function setDragTransition(on: boolean) {
 }
 
 function handlePointerDown(event: PointerEvent) {
-  if (!zoomed.value) return
+  if (!isZoomed.value) return
   if ((event.target as HTMLElement).closest('button')) return
 
   dragging.value = true
@@ -313,6 +338,7 @@ function copyColor(color: string) {
               @pointermove="handlePointerMove"
               @pointerup="handlePointerUp"
               @pointercancel="handlePointerUp"
+              @wheel.prevent="handleWheel"
             >
               <img
                 ref="previewImgRef"
@@ -363,7 +389,7 @@ function copyColor(color: string) {
                   @click.stop="toggleZoom"
                   class="bg-black/20 backdrop-blur-xl hover:bg-black/40 p-2.5 rounded-xl text-white transition-all border border-white/20"
                 >
-                  <span class="material-symbols-outlined">{{ zoomed ? 'zoom_out' : 'zoom_in' }}</span>
+                  <span class="material-symbols-outlined">{{ isZoomed ? 'zoom_out' : 'zoom_in' }}</span>
                 </button>
               </div>
             </div>

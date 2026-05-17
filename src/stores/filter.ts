@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import type { SearchParams } from '@/types/wallhaven'
 
 export const useFilterStore = defineStore('filter', () => {
@@ -10,6 +10,8 @@ export const useFilterStore = defineStore('filter', () => {
     q: '',
     page: 1,
   })
+
+  const refreshCounter = ref(0)
 
   const purityKeys = reactive({
     sfw: true,
@@ -46,9 +48,13 @@ export const useFilterStore = defineStore('filter', () => {
     params.q = q
   }
 
+  function triggerRefresh() {
+    refreshCounter.value++
+  }
+
   function getSnapshot(): SearchParams {
     return { ...params }
   }
 
-  return { params, purityKeys, togglePurityKey, setPurity, setSorting, setAtleast, setQuery, getSnapshot }
+  return { params, refreshCounter, purityKeys, togglePurityKey, setPurity, setSorting, setAtleast, setQuery, triggerRefresh, getSnapshot }
 })

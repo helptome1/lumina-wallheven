@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const navGroups = [
   {
@@ -67,16 +69,14 @@ function navigate(path: string) {
     </nav>
     <div class="mt-auto pt-6 border-t border-black/5">
       <div class="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-2xl border border-black/5">
-        <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
-          <img
-            alt="User profile"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbD695TQw9rqMEPG-hAyZ399j2Gb0QS9NmCW_FkouO6ziwiWkxocgmqSJt2_SmwuTJD8mJDw4LbaATG3GfdSdyE5Px0Y4oZPAO_pYeWmgz21reJJW8taCpep_S6kj2NOFJKtLrKMdD34vd7PXBWA2Z9JpNpZvLs1dBQHz3lNINLTfpn1uxe8u1FzJCnv2oISLuLBYwEBlRD0SXGPyoMpBKVUROgjumO-BuqOodL-D6sIBwrSfdO_HqRHWghJl6_8VoKIVhpEWN0-iR"
-            class=""
-          />
+        <div class="w-10 h-10 rounded-full overflow-hidden border-2 flex-shrink-0" :class="userStore.apiKey ? 'border-green-400/40' : 'border-primary/20'">
+          <div class="w-full h-full bg-gradient-to-br from-primary to-primary-fixed-dim flex items-center justify-center">
+            <span class="text-on-primary text-sm font-bold">{{ userStore.username.charAt(0) }}</span>
+          </div>
         </div>
         <div class="flex flex-col">
-          <span class="text-body-sm font-bold text-on-surface">Erik V.</span>
-          <span class="text-label-caps text-[10px] text-primary/70 uppercase tracking-widest">Pro Member</span>
+          <span class="text-body-sm font-bold text-on-surface">{{ userStore.username }}</span>
+          <span class="text-label-caps text-[10px] text-primary/70 uppercase tracking-widest">{{ userStore.statusLabel }}</span>
         </div>
       </div>
     </div>
