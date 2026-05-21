@@ -164,11 +164,6 @@ export const useDownloadStore = defineStore('download', () => {
     activeIds.value.add(data.id)
     persist()
 
-    toast.show('已添加至下载列表', {
-      icon: 'download',
-      tone: 'success',
-    })
-
     try {
       await invoke('download_image', {
         url: data.path,

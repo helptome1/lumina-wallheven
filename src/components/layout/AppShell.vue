@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, provide, watch } from 'vue'
-import { RouterView } from 'vue-router'
+import { computed, onMounted, ref, provide, watch } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import Sidebar from './Sidebar.vue'
 import GlobalHeader from '@/components/wallpaper/GlobalHeader.vue'
 import WallpaperDetail from '@/components/wallpaper/WallpaperDetail.vue'
 import ToastViewport from '@/components/common/ToastViewport.vue'
+import DownloadProgressPopup from '@/components/common/DownloadProgressPopup.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
+import { useDownloadStore } from '@/stores/download'
 import type { WallpaperData } from '@/types/wallhaven'
 
 const detailTarget = ref<WallpaperData | null>(null)
@@ -14,6 +16,9 @@ const detailList = ref<WallpaperData[]>([])
 const detailVisible = ref(false)
 const detailIndex = ref(0)
 const appWindow = getCurrentWindow()
+const route = useRoute()
+const onlineWallpaperRoutes = new Set(['hot', 'acg', 'people'])
+const showGlobalHeader = computed(() => onlineWallpaperRoutes.has(String(route.name)))
 
 const openDetail = (data: WallpaperData, list?: WallpaperData[]) => {
   detailTarget.value = data
@@ -56,6 +61,7 @@ const startWindowDrag = async (event: PointerEvent) => {
 }
 
 const wallpaperStore = useWallpaperStore()
+const downloadStore = useDownloadStore()
 const bgImageUrl = ref('')
 const bgLoaded = ref(false)
 
@@ -74,6 +80,11 @@ watch(() => wallpaperStore.wallpapers, (papers) => {
 
 provide('openDetail', openDetail)
 provide('closeDetail', closeDetail)
+
+onMounted(() => {
+  downloadStore.setupListeners()
+  downloadStore.initializeDownloadDir()
+})
 </script>
 
 <template>
@@ -107,12 +118,12 @@ provide('closeDetail', closeDetail)
     <!-- Main Content Area (ml-[280px] matching layout.html sidebar width) -->
     <main class="flex-1 relative z-10 flex flex-col h-screen overflow-hidden">
       <!-- Global Header (SFW/Sketchy/NSFW, Sort/Res dropdowns, Search) -->
-      <GlobalHeader />
+      <GlobalHeader v-if="showGlobalHeader" />
 
       <!-- Page Content -->
       <RouterView v-slot="{ Component }">
         <transition name="page" mode="out-in">
-          <component :is="Component" />
+          <component :is="Component" class="min-h-0 flex-1" />
         </transition>
       </RouterView>
 
@@ -131,5 +142,6 @@ provide('closeDetail', closeDetail)
     </template>
 
     <ToastViewport />
+    <DownloadProgressPopup />
   </div>
 </template>

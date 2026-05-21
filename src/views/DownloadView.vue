@@ -107,8 +107,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <div class="flex-1 overflow-y-auto px-4 pb-8 custom-scrollbar">
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-8 custom-scrollbar">
       <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 pt-4 md:px-6">
         <!-- Page Header -->
         <div class="rounded-2xl border border-black/5 bg-white/40 px-6 py-5 backdrop-blur-[40px]">

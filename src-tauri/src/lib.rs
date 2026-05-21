@@ -39,6 +39,7 @@ pub fn run() {
             commands::choose_download_dir,
             commands::get_app_data_path,
             commands::fetch_wallpaper_image,
+            commands::set_desktop_wallpaper,
             commands::fetch_wallhaven_api,
         ])
         .run(tauri::generate_context!())

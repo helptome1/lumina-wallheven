@@ -1,4 +1,6 @@
 use crate::download::{DownloadProgress, DownloadRequest, DownloadState};
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -209,20 +211,25 @@ pub async fn choose_download_dir(
 
 #[tauri::command]
 pub async fn get_app_data_path(app: AppHandle) -> Result<String, String> {
-    let path = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
+    let path = app.path().app_data_dir().map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
 }
 
 /// Proxy wallpaper image through Rust backend to bypass CDN hotlinking (403)
 /// Downloads the image to local cache dir and returns the local file path.
 #[tauri::command]
-pub async fn fetch_wallpaper_image(
-    app: AppHandle,
-    path: String,
-) -> Result<String, String> {
+pub async fn fetch_wallpaper_image(app: AppHandle, path: String) -> Result<String, String> {
+    let local_path = cache_wallpaper_image(&app, &path).await?;
+    Ok(local_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn set_desktop_wallpaper(app: AppHandle, path: String) -> Result<(), String> {
+    let local_path = cache_wallpaper_image(&app, &path).await?;
+    set_system_wallpaper(&local_path)
+}
+
+async fn cache_wallpaper_image(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     let cache_dir = app
         .path()
         .app_data_dir()
@@ -234,7 +241,7 @@ pub async fn fetch_wallpaper_image(
         .await
         .map_err(|e| format!("Failed to create cache dir: {}", e))?;
 
-    let file_name = std::path::Path::new(&path)
+    let file_name = Path::new(path)
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| "wallpaper.jpg".into());
@@ -243,12 +250,12 @@ pub async fn fetch_wallpaper_image(
 
     // Return cached file if it exists
     if local_path.exists() {
-        return Ok(local_path.to_string_lossy().to_string());
+        return Ok(local_path);
     }
 
     let cdn_base = "https://w.wallhaven.cc/full/";
     let url = if path.starts_with("https://") || path.starts_with("http://") {
-        path.clone()
+        path.to_string()
     } else {
         format!("{}{}", cdn_base, path.trim_start_matches('/'))
     };
@@ -282,7 +289,87 @@ pub async fn fetch_wallpaper_image(
         .await
         .map_err(|e| format!("Failed to write image file: {}", e))?;
 
-    Ok(local_path.to_string_lossy().to_string())
+    Ok(local_path)
+}
+
+#[cfg(target_os = "macos")]
+fn set_system_wallpaper(path: &Path) -> Result<(), String> {
+    let script = r#"
+on run argv
+  tell application "System Events"
+    set picture of every desktop to item 1 of argv
+  end tell
+end run
+"#;
+
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg(script)
+        .arg(path)
+        .output()
+        .map_err(|e| format!("Failed to run osascript: {}", e))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn set_system_wallpaper(path: &Path) -> Result<(), String> {
+    let script = r#"
+Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class Wallpaper { [DllImport("user32.dll", SetLastError=true)] public static extern bool SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni); }'
+if (-not [Wallpaper]::SystemParametersInfo(20, 0, $args[0], 3)) { exit 1 }
+"#;
+
+    let output = Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+        ])
+        .arg(path)
+        .output()
+        .map_err(|e| format!("Failed to run PowerShell: {}", e))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn set_system_wallpaper(path: &Path) -> Result<(), String> {
+    let uri = format!("file://{}", path.to_string_lossy().replace(' ', "%20"));
+    let status = Command::new("gsettings")
+        .args(["set", "org.gnome.desktop.background", "picture-uri", &uri])
+        .status()
+        .map_err(|e| format!("Failed to run gsettings: {}", e))?;
+
+    if !status.success() {
+        return Err("Failed to set GNOME wallpaper".into());
+    }
+
+    let _ = Command::new("gsettings")
+        .args([
+            "set",
+            "org.gnome.desktop.background",
+            "picture-uri-dark",
+            &uri,
+        ])
+        .status();
+
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn set_system_wallpaper(_path: &Path) -> Result<(), String> {
+    Err("Setting desktop wallpaper is not supported on this platform".into())
 }
 
 /// Proxy wallhaven.cc API requests through Rust backend to bypass CORS.

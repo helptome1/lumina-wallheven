@@ -32,6 +32,10 @@ class WallhavenAPI {
     const localPath = await invoke<string>('fetch_wallpaper_image', { path })
     return convertFileSrc(localPath)
   }
+
+  async setDesktopWallpaper(path: string): Promise<void> {
+    await invoke('set_desktop_wallpaper', { path })
+  }
 }
 
 export const wallhavenApi = new WallhavenAPI()

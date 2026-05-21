@@ -30,6 +30,7 @@ const dragging = ref(false)
 const isDragging = ref(false)
 const panX = ref(0)
 const panY = ref(0)
+const settingWallpaper = ref(false)
 
 // Template refs for direct DOM manipulation during drag
 const previewImgRef = ref<HTMLImageElement | null>(null)
@@ -91,6 +92,27 @@ function handleFavorite() {
 
 function handleDownload() {
   downloadStore.startDownload(props.data)
+}
+
+async function handleSetWallpaper() {
+  if (settingWallpaper.value) return
+
+  settingWallpaper.value = true
+  try {
+    await downloadStore.startDownload(props.data)
+    await wallhavenApi.setDesktopWallpaper(props.data.path)
+    toast.show('桌面壁纸设置成功', {
+      icon: 'wallpaper',
+      tone: 'success',
+    })
+  } catch {
+    toast.show('设置壁纸失败，请稍后再试', {
+      icon: 'error',
+      tone: 'info',
+    })
+  } finally {
+    settingWallpaper.value = false
+  }
 }
 
 async function copyText(text: string) {
@@ -457,6 +479,14 @@ function copyColor(color: string) {
 
             <!-- Actions -->
             <div class="mt-auto flex flex-col gap-3">
+              <button
+                @click="handleSetWallpaper"
+                :disabled="settingWallpaper"
+                class="w-full py-4 bg-primary/90 text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-primary/20 backdrop-blur-xl cursor-pointer disabled:cursor-wait disabled:opacity-70"
+              >
+                <span class="material-symbols-outlined">{{ settingWallpaper ? 'progress_activity' : 'wallpaper' }}</span>
+                {{ settingWallpaper ? 'Setting Wallpaper...' : 'Set as Wallpaper' }}
+              </button>
               <button
                 @click="handleDownload"
                 class="w-full py-4 bg-[#FF7D4E]/90 text-white rounded-2xl font-headline-md flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-[#FF7D4E]/20 backdrop-blur-xl cursor-pointer"
