@@ -1,10 +1,18 @@
 use crate::download::{DownloadProgress, DownloadRequest, DownloadState};
+use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 use tokio::sync::Mutex;
+
+#[derive(Serialize)]
+pub struct CacheInfo {
+    pub bytes: u64,
+    pub path: String,
+    pub platform: String,
+}
 
 #[tauri::command]
 pub async fn download_image(
@@ -215,6 +223,42 @@ pub async fn get_app_data_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
+#[tauri::command]
+pub async fn get_cache_info(app: AppHandle) -> Result<CacheInfo, String> {
+    let cache_dir = app_cache_dir(&app)?;
+    let size_dir = cache_dir.clone();
+    let bytes = tokio::task::spawn_blocking(move || dir_size(&size_dir))
+        .await
+        .map_err(|e| format!("Failed to calculate cache size: {}", e))??;
+
+    Ok(CacheInfo {
+        bytes,
+        path: cache_dir.to_string_lossy().to_string(),
+        platform: current_platform().into(),
+    })
+}
+
+#[tauri::command]
+pub async fn clear_app_cache(app: AppHandle) -> Result<CacheInfo, String> {
+    let cache_dir = app_cache_dir(&app)?;
+
+    if cache_dir.exists() {
+        tokio::fs::remove_dir_all(&cache_dir)
+            .await
+            .map_err(|e| format!("Failed to clear cache: {}", e))?;
+    }
+
+    tokio::fs::create_dir_all(&cache_dir)
+        .await
+        .map_err(|e| format!("Failed to recreate cache dir: {}", e))?;
+
+    Ok(CacheInfo {
+        bytes: 0,
+        path: cache_dir.to_string_lossy().to_string(),
+        platform: current_platform().into(),
+    })
+}
+
 /// Proxy wallpaper image through Rust backend to bypass CDN hotlinking (403)
 /// Downloads the image to local cache dir and returns the local file path.
 #[tauri::command]
@@ -230,12 +274,7 @@ pub async fn set_desktop_wallpaper(app: AppHandle, path: String) -> Result<(), S
 }
 
 async fn cache_wallpaper_image(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
-    let cache_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?
-        .join("cache")
-        .join("images");
+    let cache_dir = app_cache_dir(app)?.join("images");
 
     tokio::fs::create_dir_all(&cache_dir)
         .await
@@ -290,6 +329,54 @@ async fn cache_wallpaper_image(app: &AppHandle, path: &str) -> Result<PathBuf, S
         .map_err(|e| format!("Failed to write image file: {}", e))?;
 
     Ok(local_path)
+}
+
+fn app_cache_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    Ok(app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("cache"))
+}
+
+fn dir_size(path: &Path) -> Result<u64, String> {
+    if !path.exists() {
+        return Ok(0);
+    }
+
+    let mut total = 0;
+    let entries = std::fs::read_dir(path).map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let metadata = entry.metadata().map_err(|e| e.to_string())?;
+        if metadata.is_dir() {
+            total += dir_size(&entry.path())?;
+        } else {
+            total += metadata.len();
+        }
+    }
+
+    Ok(total)
+}
+
+fn current_platform() -> &'static str {
+    #[cfg(target_os = "macos")]
+    {
+        "macOS"
+    }
+    #[cfg(target_os = "windows")]
+    {
+        "Windows"
+    }
+    #[cfg(target_os = "linux")]
+    {
+        "Linux"
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        "Unknown"
+    }
 }
 
 #[cfg(target_os = "macos")]

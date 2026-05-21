@@ -38,6 +38,8 @@ pub fn run() {
             commands::set_download_dir,
             commands::choose_download_dir,
             commands::get_app_data_path,
+            commands::get_cache_info,
+            commands::clear_app_cache,
             commands::fetch_wallpaper_image,
             commands::set_desktop_wallpaper,
             commands::fetch_wallhaven_api,
