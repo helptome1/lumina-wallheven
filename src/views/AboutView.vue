@@ -31,7 +31,7 @@
         <div class="space-y-2 text-body-sm">
           <div class="flex justify-between py-1.5 border-b border-black/5">
             <span class="text-on-surface-variant">Version</span>
-            <span class="text-on-surface font-medium">1.0.0</span>
+            <span class="text-on-surface font-medium">1.1.0</span>
           </div>
           <div class="flex justify-between py-1.5 border-b border-black/5">
             <span class="text-on-surface-variant">Tech Stack</span>
